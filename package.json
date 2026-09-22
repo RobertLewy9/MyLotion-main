@@ -1,0 +1,13 @@
+{
+  "name": "my-lotion",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.10"
+  }
+}
