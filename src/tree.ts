@@ -34,9 +34,48 @@ export interface TreeNode extends SidebarDocument {
  *  5. 纯函数：不允许修改传入的数组或对象
  *
  * 提示：先想想如果用递归 filter 会是什么复杂度，有没有 O(n) 的做法。
- *
+ ** 时间复杂度：O(n)
+ * 空间复杂度：O(n)
  * TODO: 你来实现（把下面这行替换掉）
  */
 export function buildTree(docs: SidebarDocument[]): TreeNode[] {
-  throw new Error("buildTree 还没实现");
+  // 1. 创建 Map
+  // key：文档 id
+  // value：对应的 TreeNode
+  const nodeMap=new Map<string,TreeNode>();
+
+  // 最终返回的根节点
+  const roots: TreeNode[] = [];
+
+  // 2. 第一遍遍历
+  // 把 SidebarDocument 转换成 TreeNode
+  for(const doc of docs){
+    nodeMap.set(doc.id,{
+        ...doc,
+        children:[],
+    })
+  }
+
+  // 3. 第二遍遍历
+  // 根据 parentDocument 建立父子关系
+  for(const doc of docs){
+    const node=nodeMap.get(doc.id)!;
+
+    //判断是不是根节点
+    if(doc.parentDocument===null){
+      roots.push(node);
+      continue;
+    }
+
+    const parent=nodeMap.get(doc.parentDocument);
+
+    if(parent){
+      parent.children.push(node);
+    }
+    else{
+      roots.push(node);
+    }
+  }
+
+  return roots;
 }
