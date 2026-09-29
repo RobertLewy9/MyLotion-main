@@ -38,5 +38,47 @@
 import type { SidebarDocument } from "./tree";
 
 export function collectSubtreeIds(docs: SidebarDocument[], rootId: string): string[] {
-  throw new Error("collectSubtreeIds 还没实现");
+  
+  const childrenMap=new Map<string,SidebarDocument[]>();
+  for(const doc of docs){
+    const parentId=doc.parentDocument;
+    if(parentId===null)
+      {
+        continue;
+      }
+
+    if(!childrenMap.has(parentId)){
+       childrenMap.set(parentId,[]);
+    }
+    childrenMap.get(parentId)!.push(doc);
+  }
+
+  const rootExists=docs.some(doc=>doc.id===rootId);
+
+  if(!rootExists){
+    return [];
+  }
+
+  const queue:string[] =[rootId];
+  const visited=new Set<string>();
+  visited.add(rootId);
+  const result:string[]=[];
+
+
+  while(queue.length>0){
+    const currentId=queue.shift()!;
+    const children=childrenMap.get(currentId)??[];
+
+    for(const child of children){
+      if(visited.has(child.id)){
+        continue;
+      }
+
+      visited.add(child.id);
+      result.push(child.id);
+      queue.push(child.id);
+    }
+
+  }
+  return result;
 }
