@@ -13,7 +13,7 @@ function doc(id: string, parentDocument: string | null = null): SidebarDocument 
 
 describe('amiNos',()=>{
   it("这是我的自定义describe测试",()=>{
-    expect(1+1).toBe(3);
+    expect(1+1).toBe(2);
   })
 
 })
