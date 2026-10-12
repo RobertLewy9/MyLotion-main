@@ -38,47 +38,44 @@
 import type { SidebarDocument } from "./tree";
 
 export function collectSubtreeIds(docs: SidebarDocument[], rootId: string): string[] {
-  
-  const childrenMap=new Map<string,SidebarDocument[]>();
-  for(const doc of docs){
-    const parentId=doc.parentDocument;
-    if(parentId===null)
-      {
-        continue;
-      }
-
-    if(!childrenMap.has(parentId)){
-       childrenMap.set(parentId,[]);
-    }
-    childrenMap.get(parentId)!.push(doc);
-  }
-
+  //1.检查传入的集合中根节点是否存在
   const rootExists=docs.some(doc=>doc.id===rootId);
-
+  //不存在直接返回空集合
   if(!rootExists){
     return [];
   }
 
-  const queue:string[] =[rootId];
+  //2.有根节点就开始遍历，建立父节点到子节点的MAP
+  const childrenMap=new Map<string,SidebarDocument[]>();
+  for(const doc of docs){
+    const parentId =doc.parentDocument;
+    if(parentId===null)
+      {
+        continue;
+      }
+    if(!childrenMap.has(parentId)){
+      childrenMap.set(parentId,[]);
+    }
+    childrenMap.get(parentId)!.push(doc);
+  }
+  //3.通过BFS+已访问数组的方法，整合到结果数组中并返回
+  const result:string []=[];
   const visited=new Set<string>();
   visited.add(rootId);
-  const result:string[]=[];
-
-
+  const queue:string []=[];
+  queue.push(rootId);
   while(queue.length>0){
-    const currentId=queue.shift()!;
-    const children=childrenMap.get(currentId)??[];
-
+    const docu=queue.shift()!;
+    const children=childrenMap.get(docu)??[];
     for(const child of children){
       if(visited.has(child.id)){
         continue;
       }
-
       visited.add(child.id);
-      result.push(child.id);
       queue.push(child.id);
+      result.push(child.id);
     }
-
   }
   return result;
+
 }
