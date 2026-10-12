@@ -22,7 +22,7 @@ export interface SidebarDocument {
 export interface TreeNode extends SidebarDocument {
   children: TreeNode[];
 }
-
+ 
 /**
  * 把扁平数组还原成嵌套树。
  *

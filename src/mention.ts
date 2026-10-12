@@ -39,12 +39,24 @@ export interface Mention {
   id: string;
 }
 
-/** 抠出文本里所有文档提及，按出现顺序、按 id 去重 */
 export function extractMentions(text: string): Mention[] {
-  throw new Error("extractMentions 还没实现");
+  const re = /\[@([^\]]+)\]\(([a-zA-Z0-9-]{3,64})\)/g; // 每次调用新建实例，避开 lastIndex 状态
+  const seen = new Set<string>();
+  const result: Mention[] = [];
+
+  for (const m of text.matchAll(re)) {
+    const title = m[1].trim();
+    const id = m[2];
+    if (!title) continue;        // 去空白后为空 → 跳过（不占用 id 的去重名额）
+    if (seen.has(id)) continue;  // 同 id 只保留首次出现
+    seen.add(id);
+    result.push({ title, id });
+  }
+  return result;
 }
 
-/** 胶囊标题截断：超过 maxChars 个字时截断并加省略号 */
 export function truncateMentionTitle(title: string, maxChars = 4): string {
-  throw new Error("truncateMentionTitle 还没实现");
+  const t = title.trim();
+  if (t.length <= maxChars) return t;
+  return t.slice(0, maxChars) + "…";
 }
