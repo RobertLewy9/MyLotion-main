@@ -10,7 +10,8 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day | 主题 | 状态 |
 |-----|------|------|
 | Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ 已完成 |
-| Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | 🚧 练习中（骨架已就位，待实现） |
+| Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ 已完成 |
+| Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | 🚧 练习中（骨架已就位，待实现） |
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -60,6 +61,24 @@ Lotion 的 `lib/db.ts` 里 `archive()` / `restore()` 是这么写的：拿到一
 5. 纯函数：不修改传入的数组或对象
 6. 防环：数据损坏成 `a↔b` 时不能死循环，每个 id 最多出现一次
 
+## Day 3 —— 文档提及解析
+
+AI 面板的胶囊输入框选中某个文档后，会把这段文本发给服务端/Agent：
+
+```
+[@季度总结](9f8c1e2a)
+```
+
+服务端要先把用户这段话里所有提及「抠」出来，才知道用户 @ 了哪些文档，
+再据此读文档内容、拼进模型上下文。对应 Lotion 的 `lib/mention.ts`。
+
+覆盖的规则：
+
+1. `extractMentions(text)`：匹配 `[@标题](id)`，标题不含 `]`、id 为字母/数字/连字符且长度 3~64
+2. 按出现顺序返回；标题去首尾空白，空标题跳过；同一 id 只保留首次出现
+3. `truncateMentionTitle(title, maxChars = 4)`：先 trim，超长则截断并补 `…`
+4. 纯函数、可重复调用（注意带 `g` 的正则 `lastIndex` 是有状态的）
+
 ## 技术栈
 
 - **TypeScript**（`strict` 模式，`noEmit`，仅做类型检查）
@@ -74,10 +93,12 @@ MyLotion-main/
 ├── src/
 │   ├── tree.ts          # Day 1：buildTree —— 扁平数组还原成文档树
 │   ├── subtree.ts       # Day 2：collectSubtreeIds —— 一次算出整棵子树
+│   ├── mention.ts       # Day 3：extractMentions / truncateMentionTitle —— @提及解析
 │   └── test.js          # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts     # buildTree 的单元测试（vitest）
-│   └── subtree.test.ts  # collectSubtreeIds 的单元测试（vitest）
+│   ├── subtree.test.ts  # collectSubtreeIds 的单元测试（vitest）
+│   └── mention.test.ts  # 提及解析的单元测试（vitest）
 ├── package.json         # npm scripts 与依赖
 ├── tsconfig.json        # TypeScript 编译配置
 └── vitest.config.mts    # Vitest 配置（node 环境 + @ 别名）
@@ -103,20 +124,20 @@ pnpm test
 pnpm test:watch
 
 # 4. 只跑某一天的用例
-npx vitest run test/subtree.test.ts
+npx vitest run test/mention.test.ts
 ```
 
-> 注：`test/tree.test.ts` 里保留了一个我自己的 `amiNos` 占位用例（`expect(1+1).toBe(3)`），
-> 目前是**红灯**状态，属于练手时留下的自定义测试，不影响 `buildTree` 的其余用例。
-> `test/subtree.test.ts` 的 11 个用例在实现 `collectSubtreeIds` 之前也全是红的 —— 这是练习的起点，不是 bug。
+> 注：`test/mention.test.ts` 的 16 个用例在实现 `extractMentions` / `truncateMentionTitle`
+> 之前全是红的 —— 这是练习的起点，不是 bug。Day 1、Day 2 的用例目前全绿。
 
 ## 学习路线
 
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
-- [ ] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环），骨架与用例已就位，待实现
+- [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
+- [ ] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`），骨架与用例已就位，待实现
 - [ ] 待续……
 
 ## 参考
 
 - **Lotion** —— 全栈 AI 笔记应用（无限层级文档树 + BlockNote + DeepSeek Agent），本仓库的练习原型
-- Lotion 中对应实现：`lib/db.ts` 的 `getSidebarAll()` / `archive()` / `restore()`、`document-list.tsx` 的递归树渲染
+- Lotion 中对应实现：`lib/db.ts` 的 `getSidebarAll()` / `archive()` / `restore()`、`lib/mention.ts`、`document-list.tsx` 的递归树渲染
