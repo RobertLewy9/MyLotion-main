@@ -11,7 +11,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 |-----|------|------|
 | Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ 已完成 |
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ 已完成 |
-| Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | 🚧 练习中（骨架已就位，待实现） |
+| Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ 已完成 |
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -99,6 +99,9 @@ MyLotion-main/
 │   ├── tree.test.ts     # buildTree 的单元测试（vitest）
 │   ├── subtree.test.ts  # collectSubtreeIds 的单元测试（vitest）
 │   └── mention.test.ts  # 提及解析的单元测试（vitest）
+├── docs/
+│   ├── 学习策略.md       # 学习策略 v2（依据 8 场面经制定）
+│   └── 面经考点.md       # 面经考点清单（自测用）
 ├── package.json         # npm scripts 与依赖
 ├── tsconfig.json        # TypeScript 编译配置
 └── vitest.config.mts    # Vitest 配置（node 环境 + @ 别名）
@@ -127,15 +130,17 @@ pnpm test:watch
 npx vitest run test/mention.test.ts
 ```
 
-> 注：`test/mention.test.ts` 的 16 个用例在实现 `extractMentions` / `truncateMentionTitle`
-> 之前全是红的 —— 这是练习的起点，不是 bug。Day 1、Day 2 的用例目前全绿。
+> 注：Day 1 ~ Day 3 的用例目前全绿（11 + 11 + 16 = 38）。
 
 ## 学习路线
 
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
-- [ ] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`），骨架与用例已就位，待实现
+- [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
 - [ ] 待续……
+
+> Day 3 起调整为**讲解驱动**：代码直接给出，重点转向「读懂 + 讲清楚 + 高频手撕」，
+> 详见 docs/学习策略.md。
 
 ## 参考
 
