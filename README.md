@@ -94,14 +94,19 @@ MyLotion-main/
 │   ├── tree.ts          # Day 1：buildTree —— 扁平数组还原成文档树
 │   ├── subtree.ts       # Day 2：collectSubtreeIds —— 一次算出整棵子树
 │   ├── mention.ts       # Day 3：extractMentions / truncateMentionTitle —— @提及解析
+│   ├── interview/       # 手撕题库（EventEmitter / LRU / 防抖节流…）
 │   └── test.js          # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts     # buildTree 的单元测试（vitest）
 │   ├── subtree.test.ts  # collectSubtreeIds 的单元测试（vitest）
-│   └── mention.test.ts  # 提及解析的单元测试（vitest）
+│   ├── mention.test.ts  # 提及解析的单元测试（vitest）
+│   └── interview/       # 手撕题用例
 ├── docs/
 │   ├── 学习策略.md       # 学习策略 v2（依据 8 场面经制定）
-│   └── 面经考点.md       # 面经考点清单（自测用）
+│   ├── 学习计划.md       # 每日三轨模板 + Day4~10 路线图 + 打卡表
+│   ├── 架构总览.md       # Lotion 端到端全流程（理解整套流程）
+│   ├── 面经考点.md       # 面经考点清单（自测用）
+│   └── 讲稿/             # 每天的口述稿（_模板 + 示例）
 ├── package.json         # npm scripts 与依赖
 ├── tsconfig.json        # TypeScript 编译配置
 └── vitest.config.mts    # Vitest 配置（node 环境 + @ 别名）
@@ -139,8 +144,9 @@ npx vitest run test/mention.test.ts
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
 - [ ] 待续……
 
-> Day 3 起调整为**讲解驱动**：代码直接给出，重点转向「读懂 + 讲清楚 + 高频手撕」，
-> 详见 docs/学习策略.md。
+> Day 3 起调整为**讲解驱动**：MyLotion 继续推进，但代码不再手敲，重点转向
+> 「读懂整套流程 + 讲清楚 + 每天带八股和手撕」。
+> 每日安排见 docs/学习计划.md，架构全景见 docs/架构总览.md，考点清单见 docs/面经考点.md。
 
 ## 参考
 
