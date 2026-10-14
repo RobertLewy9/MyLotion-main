@@ -17,7 +17,7 @@
  *
  * 时间复杂度：on/off 为 O(k)（k = 该事件监听器数），emit 为 O(k)
  *
- * TODO: 你来实现
+ *
  */
 export class EventEmitter {
   on(event: string, fn: (...args: unknown[]) => void): void {
