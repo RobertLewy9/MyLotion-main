@@ -27,7 +27,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
 | Day 4 | 认地图：Lotion 整套流程 + 讲稿 v1 | ✅ |
 
-手撕轨：`EventEmitter` 脚手架 + 10 个用例已就位，待实现。
+手撕轨：手撕 01 `EventEmitter` 已完成（12/12 用例通过），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -109,6 +109,21 @@ AI 面板的胶囊输入框选中文档后，会把它序列化成标记文本�
 产出：`docs/讲稿/day04-架构通读.md`（v1，60 秒口述稿）。
 完整版见 `docs/架构总览.md`。
 
+### C 轨 · 手撕 01 —— EventEmitter
+
+IEG 一面题。核心是一张 `Map<事件名, 监听器数组>`，三个细节是追问点：
+
+- **`once` 用包装函数**：触发时先 `off` 自己、再调原函数（先摘再跑）。反过来写，原函数里再 `emit` 同一事件就会递归重入
+- **包装函数上挂 `listener` 指回原函数**：这样 `off(event, 原函数)` 也能移除 once 注册过的监听器（对齐 Node 行为）
+- **`emit` 遍历 `[...list]` 快照**：本轮触发哪些监听器，在开始时定死；否则回调里新 `on` 的监听器会在本轮就被调用
+
+另外 `off` 移除后若该事件已无监听器，要把 key 一起 `delete`，否则 `Map` 会随动态事件名无限增长。
+
+> 注意：上面两条语义（快照、先摘再跑）**原来的 10 条用例全都盖不住** —— 把快照去掉、或把 `off` 挪到 `fn` 之后，
+> 测试依然全绿。已补 2 条用例把它们钉住。
+
+题解与追问预判见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
+
 ## 技术栈
 
 - **TypeScript**（`strict` 模式，`noEmit`，仅做类型检查）
@@ -125,7 +140,7 @@ MyLotion-main/
 │   ├── subtree.ts              # Day 2：collectSubtreeIds —— 一次算出整棵子树
 │   ├── mention.ts              # Day 3：extractMentions / truncateMentionTitle —— @提及解析
 │   ├── interview/
-│   │   └── event-emitter.ts    # 手撕 01：EventEmitter（待实现）
+│   │   └── event-emitter.ts    # 手撕 01：EventEmitter（on/once/off/emit，12/12 ✅）
 │   └── test.js                 # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts
@@ -141,7 +156,8 @@ MyLotion-main/
 │   └── 讲稿/
 │       ├── _模板.md
 │       ├── 示例-day01-buildTree.md
-│       └── day04-架构通读.md    # Day 4 讲稿 v1
+│       ├── day04-架构通读.md    # Day 4 讲稿 v1
+│       └── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
@@ -170,15 +186,14 @@ pnpm test:watch
 npx vitest run test/interview/
 ```
 
-> 注：Day 1~3 的 38 个用例全绿；`test/interview/event-emitter.test.ts` 的 10 个用例是**手撕起点**，
-> 实现前保持红色。
+> 注：全部 50 个用例全绿（Day 1~3 的 38 个 + 手撕 01 的 12 个）。
 
 ## 学习路线
 
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1
+- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；C 轨手撕 01 `EventEmitter`
 - [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 

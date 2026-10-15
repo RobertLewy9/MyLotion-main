@@ -1,4 +1,4 @@
-﻿import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { EventEmitter } from "@/src/interview/event-emitter";
 
 describe("EventEmitter —— 手撕 01（IEG 一面）", () => {
@@ -88,5 +88,31 @@ describe("EventEmitter —— 手撕 01（IEG 一面）", () => {
     expect(second).toHaveBeenCalledTimes(1); // 本轮仍触发，下一轮才不触发
     ee.emit("foo");
     expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  it("once：原函数里重新 emit 同一个事件，不会重入", () => {
+    const ee = new EventEmitter();
+    let count = 0;
+    ee.once("tick", () => {
+      count++;
+      if (count < 5) ee.emit("tick");
+    });
+    ee.emit("tick");
+    expect(count).toBe(1); // 先摘再跑：内层 emit 时监听器已移除
+  });
+
+  it("emit 过程中新增监听器，本轮不触发（快照语义）", () => {
+    const ee = new EventEmitter();
+    const late = vi.fn();
+    let added = false;
+    ee.on("foo", () => {
+      if (added) return;
+      added = true;
+      ee.on("foo", late);
+    });
+    ee.emit("foo");
+    expect(late).not.toHaveBeenCalled(); // 本轮触发集合已经定死
+    ee.emit("foo");
+    expect(late).toHaveBeenCalledTimes(1); // 下一轮才参与
   });
 });
