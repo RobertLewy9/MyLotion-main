@@ -92,12 +92,3 @@ export class EventEmitter {
     }
   }
 }
-
-
-const emitter=new EventEmitter();
-emitter.once("message",()=>{
-  console.log("收到消息");
-
-  // 在这个回调里面，再次触发同一个事件！
-  emitter.emit("message");
-});

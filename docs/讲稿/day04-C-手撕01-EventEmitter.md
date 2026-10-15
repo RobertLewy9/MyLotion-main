@@ -74,6 +74,19 @@ this.on(event, wrapper);
 实测：注册一个「每次都重新 `emit("tick")`」的 once 监听器，先摘后跑触发 **1** 次，
 先跑再摘触发 **5** 次（本例里带了 `count < 5` 的刹车，否则直接栈溢出）。
 
+> **自己跑一遍**（不改实现就能复现）：
+>
+> ```ts
+> const ee = new EventEmitter();
+> ee.once("message", () => {
+>   console.log("收到消息");
+>   ee.emit("message"); // 回调里再触发同一个事件
+> });
+> ee.emit("message");
+> ```
+>
+> 现在的实现只打印 **1** 次；把 `off` 挪到 `fn` 后面，就会一直打印到栈溢出。
+
 **③ 是为了能被 off 掉。** 用户写的是 `once("a", foo)`，登记表里存的却是 `wrapper`，
 所以 `off("a", foo)` 用 `cb === fn` 比对根本找不到人。`off` 因此多一条判断：
 
