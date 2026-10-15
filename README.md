@@ -25,7 +25,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ |
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
-| Day 4 | 认地图：Lotion 整套流程 + 讲稿 v1 | ✅ |
+| Day 4 | 认地图 + 事件循环（B 轨）+ 手撕 01（C 轨） | ✅ |
 
 手撕轨：手撕 01 `EventEmitter` 已完成（12/12 用例通过），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
 
@@ -124,6 +124,18 @@ IEG 一面题。核心是一张 `Map<事件名, 监听器数组>`，三个细节
 
 题解与追问预判见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
 
+### B 轨 · 事件循环（宏 / 微任务 + Promise 时机）
+
+B站 / CSIG / 腾讯云智一面高频（★★★）。铁律是：**跑完一个宏任务 → 清空微任务（直到空）→ 只有这时才轮到渲染 → 再取下一个宏任务**。
+
+- **渲染窗口只存在于宏任务之间**：实测微任务连排 20 万次期间，一个 `setTimeout(0)` 完全没机会跑；宏任务递归时它立刻就跑
+- `await` 右边的表达式**立即求值**，让位的只是它后面的代码
+- `new Promise(executor)` 的 executor **同步执行**
+- `return Promise` / `await` thenable 比普通值**多等 2 个 tick**（FIFO 队伍推演）
+- 微任务合并（同一轮去重）≠ debounce（等用户停下来）；3 个不同宏任务各改 1 次，微任务合并会失效
+
+题纸 22 题 + 实跑标准答案见 `docs/八股/day04-事件循环-题目.md` / `day04-事件循环-答案.md`；首刷 7/12，错题本见 `docs/日志/day04.md`。
+
 ## 技术栈
 
 - **TypeScript**（`strict` 模式，`noEmit`，仅做类型检查）
@@ -153,11 +165,16 @@ MyLotion-main/
 │   ├── 学习计划.md              # 45 天三轨日历 + 讲稿版本机制 + 完善路线
 │   ├── 架构总览.md              # Lotion 端到端全流程 + 边界与演进
 │   ├── 面经考点.md              # 考点清单 + STAR 故事库 + 反问清单
-│   └── 讲稿/
-│       ├── _模板.md
-│       ├── 示例-day01-buildTree.md
-│       ├── day04-架构通读.md    # Day 4 讲稿 v1
-│       └── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
+│   ├── 讲稿/
+│   │   ├── _模板.md
+│   │   ├── 示例-day01-buildTree.md
+│   │   ├── day04-架构通读.md    # Day 4 讲稿 v1
+│   │   └── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
+│   ├── 八股/
+│   │   ├── day04-事件循环-题目.md
+│   │   └── day04-事件循环-答案.md
+│   └── 日志/
+│       └── day04.md             # Day 4 收官记录 + 错题本
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
@@ -193,7 +210,7 @@ npx vitest run test/interview/
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；C 轨手撕 01 `EventEmitter`
+- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B 轨事件循环（首刷 7/12）；C 轨手撕 01 `EventEmitter`
 - [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
