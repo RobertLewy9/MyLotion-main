@@ -48,15 +48,14 @@ export class EventEmitter {
 
   /**
    * 只订阅一次：存进数组的其实是一个包装函数。
-   * 触发时它先把自己 off 掉再执行原函数 —— 「先摘再跑」保证即使原函数里又 emit
-   * 也不会重复触发（若先跑再摘，原函数里 emit 同一个事件就会递归再进来一次）。
+   * 面试记忆：once 通过包装函数实现只执行一次，并在执行原始回调前移除监听器，避免重入。
    */
   once(event: string, fn: Listener): void {
     const wrapper = ((...args: unknown[]) => {
       this.off(event, fn);
       fn(...args);
     }) as OnceWrapper;
-    wrapper.listener = fn;
+    wrapper.listener = fn;//是为了让包装函数保留原始函数的身份信息，方便 off 根据原始函数取消订阅。
     this.on(event, wrapper);
   }
 
@@ -73,7 +72,7 @@ export class EventEmitter {
       (cb) => cb !== fn && !(isOnceWrapper(cb) && cb.listener === fn),
     );
 
-    // 该事件已经没有监听器了就把这个 key 删掉，别留空数组越堆越多
+    // 该事件已经没有监听器了就把这个 事件的key 删掉，别留空数组越堆越多
     if (next.length === 0) {
       this.events.delete(event);
     } else {
@@ -93,3 +92,12 @@ export class EventEmitter {
     }
   }
 }
+
+
+const emitter=new EventEmitter();
+emitter.once("message",()=>{
+  console.log("收到消息");
+
+  // 在这个回调里面，再次触发同一个事件！
+  emitter.emit("message");
+});
