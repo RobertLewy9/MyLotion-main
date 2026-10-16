@@ -94,3 +94,17 @@ async function loadB() { const [a, b] = await Promise.all([fetchOne(), fetchOne(
 Z1. `Promise.all` 其中一个失败会怎样？`Promise.allSettled` 呢？
 Z2. 手写 `async/await`：用 generator + 自动执行器把 `await` 描述出来。
 Z3. `await` 一个「已经是 resolved」的原生 promise，会额外多等几个 tick？
+
+## Part 5 · 简历落地自测（必答 —— 面试官就按这个问）
+
+> 来源：在腾讯做 Agent 开发实习的朋友 ——「他只会看着你简历问呀」。
+> 逐词映射表见 `docs/简历映射.md`，固定骨架：**① 在我项目里干什么 → ② 完整流程走一遍 → ③ 为什么选它、不用 X**。
+
+**L1** 挑一条**和今天考点挂着**的简历词（今天讲 `async/await` 与微任务时机，能挂的有：
+「请求去重 `pendingById`」「AI 面板并发拉历史与文档树」「流式输出的消费侧」），合上资料讲 2 分钟。
+
+**L2** 追问预演（面试官必然往下追一层）：
+- 「同一篇文档同时发起两次 `getById`，第二次会怎样？」—— 要讲出 `pendingById` 命中 / 未命中两条分支
+- 「文档树为什么是**前端懒加载 + 后端按 `parentId` 按需返回**，而不是一次拉全量？」
+
+**L3** 哪条讲不满 2 分钟、卡在第几段 —— 记进 `docs/日志/dayNN.md`，并写清要补的材料。
