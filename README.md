@@ -6,16 +6,17 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 本仓库 **不是** Lotion 的分支或复制品，而是我把它的关键机制拆成「一天一块」、亲手复刻的靶场。
 代码由 AI 产出，我负责**读懂 → 讲清楚 → 扛住追问**。
 
-## 学习策略：三轨并行
+## 学习策略：四轨并行
 
 | 轨 | 做什么 | 产出 |
 |----|--------|------|
 | **A · MyLotion** | 读实现 / 架构 → 理解流程 → 写讲稿 → 被追问 | `docs/讲稿/dayNN-*.md` |
-| **B · 八股** | 按考点清单**开口讲**（不默读） | `docs/面经考点.md` 打勾 |
-| **C · 手撕** | 限时 20 分钟手写高频题 + 跑测试 | `src/interview/*.ts` |
+| **B1 · 前端八股** | 按考点清单**开口讲**（不默读） | `docs/面经考点.md` 打勾 + `docs/八股/` 题纸 |
+| **B2 · Agent 开发八股** | 同上，主题是 LLM / Prompt / ReAct / Tool / MCP / RAG | `docs/agent考点.md` 打勾 + `docs/八股/` 题纸 |
+| **C · 力扣手撕** | 每天 2 题，限时 20 分钟/题 + 跑测试 | `docs/力扣hot100.md` 打勾 + `src/interview/*.ts` |
 
 - **依据**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
-- **时间轴**：45 天（Day 4 ~ Day 48），日历见 `docs/学习计划.md`。
+- **时间轴**：45 天（Day 4 = 10-15 已完成 → Day 48 = 11-28），日历与四轨排期见 `docs/学习计划.md`。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
 ## 当前进度
@@ -25,9 +26,12 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ |
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
-| Day 4 | 认地图 + 事件循环（B 轨）+ 手撕 01（C 轨） | ✅ |
+| Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
+| Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 |
 
-手撕轨：手撕 01 `EventEmitter` 已完成（12/12 用例通过），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
+手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/力扣hot100.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
+已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
+Day 5 待实现：`two-sum` / `group-anagrams` —— 13 个用例现在是**红的**，写完就绿。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -152,27 +156,36 @@ MyLotion-main/
 │   ├── subtree.ts              # Day 2：collectSubtreeIds —— 一次算出整棵子树
 │   ├── mention.ts              # Day 3：extractMentions / truncateMentionTitle —— @提及解析
 │   ├── interview/
-│   │   └── event-emitter.ts    # 手撕 01：EventEmitter（on/once/off/emit，12/12 ✅）
+│   │   ├── event-emitter.ts    # 手撕 01：EventEmitter（on/once/off/emit，12/12 ✅）
+│   │   ├── two-sum.ts          # Hot 100 · 两数之和（Day 5 待实现）
+│   │   └── group-anagrams.ts   # Hot 100 · 字母异位词分组（Day 5 待实现）
 │   └── test.js                 # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts
 │   ├── subtree.test.ts
 │   ├── mention.test.ts
 │   └── interview/
-│       └── event-emitter.test.ts
+│       ├── event-emitter.test.ts
+│       ├── two-sum.test.ts
+│       └── group-anagrams.test.ts
 ├── docs/
 │   ├── 学习策略.md              # 为什么这么学（依据 8 场面经）
-│   ├── 学习计划.md              # 45 天三轨日历 + 讲稿版本机制 + 完善路线
+│   ├── 学习计划.md              # 45 天四轨日历 + 讲稿版本机制 + 完善路线
 │   ├── 架构总览.md              # Lotion 端到端全流程 + 边界与演进
-│   ├── 面经考点.md              # 考点清单 + STAR 故事库 + 反问清单
+│   ├── 面经考点.md              # 前端八股考点清单（B1）+ STAR 故事库 + 反问清单
+│   ├── agent考点.md             # Agent 开发八股考点清单（B2）
+│   ├── 力扣hot100.md            # 力扣 Hot 100 题单 + 打卡（C 轨主线）
 │   ├── 讲稿/
 │   │   ├── _模板.md
 │   │   ├── 示例-day01-buildTree.md
 │   │   ├── day04-架构通读.md    # Day 4 讲稿 v1
-│   │   └── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
+│   │   ├── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
+│   │   └── day05-架构自绘.md    # Day 5 A 轨：自己画架构图 + 主链路
 │   ├── 八股/
 │   │   ├── day04-事件循环-题目.md
-│   │   └── day04-事件循环-答案.md
+│   │   ├── day04-事件循环-答案.md
+│   │   ├── day05-输出题与async形态-题目.md   # Day 5 B1
+│   │   └── day05-agent基础-题目.md           # Day 5 B2
 │   └── 日志/
 │       └── day04.md             # Day 4 收官记录 + 错题本
 ├── package.json
@@ -203,14 +216,15 @@ pnpm test:watch
 npx vitest run test/interview/
 ```
 
-> 注：全部 50 个用例全绿（Day 1~3 的 38 个 + 手撕 01 的 12 个）。
+> 注：Day 1~4 的 50 个用例全绿。Day 5 的两道 Hot 100 手撕题（`two-sum` / `group-anagrams`）是**待实现**状态，13 个用例保持红色，属预期 —— 写完就绿。
 
 ## 学习路线
 
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B 轨事件循环（首刷 7/12）；C 轨手撕 01 `EventEmitter`
+- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（首刷 7/12）；C 手撕 01 `EventEmitter`
+- [ ] **Day 5** —— 自己画架构图 + 主链路；B1 输出题与 `async/await` 形态；B2 Agent 八股（LLM 基础 + Prompt）；C Hot 100 开篇（两数之和 / 字母异位词分组）
 - [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
