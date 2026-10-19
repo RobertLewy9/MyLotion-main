@@ -189,7 +189,11 @@ MyLotion-main/
 │   │   ├── day04-事件循环-题目.md
 │   │   ├── day04-事件循环-答案.md
 │   │   ├── day05-输出题与async形态-题目.md   # Day 5 B1
-│   │   └── day05-agent基础-题目.md           # Day 5 B2
+│   │   ├── day05-输出题与async形态-答案.md   # 实跑输出 + tick 实测
+│   │   ├── day05-agent基础-题目.md           # Day 5 B2
+│   │   └── day05-agent基础-答案.md           # 口述版
+│   ├── 速记/
+│   │   └── day05-速记.md        # 路上/等电梯速记卡（另有 QQ 纯文本版 .txt）
 │   └── 日志/
 │       └── day04.md             # Day 4 收官记录 + 错题本
 ├── package.json
