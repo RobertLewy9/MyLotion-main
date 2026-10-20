@@ -1,5 +1,6 @@
 # Day 4 · C 轨 —— 手撕 01：EventEmitter（on / once / off / emit）
 
+> **归属：Day 4 · C 轨（力扣 / 手撕）**
 > 来源：IEG 一面编程题。
 > 实现：`src/interview/event-emitter.ts`；用例：`test/interview/event-emitter.test.ts`（12/12 ✅）。
 
