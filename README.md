@@ -8,18 +8,19 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 
 ## 学习策略：四轨并行
 
+> 文件怎么找：命名统一为 `dayNN-<轨>-<主题>`，**所有文件 × Day × 轨 的总表见 `docs/00-文件索引.md`**。
+
 | 轨 | 做什么 | 产出 |
 |----|--------|------|
 | **A · MyLotion** | 读实现 / 架构 → 理解流程 → 写讲稿 → 被追问 | `docs/讲稿/dayNN-*.md` |
-| **B1 · 前端八股** | 按考点清单**开口讲**（不默读） | `docs/面经考点.md` 打勾 + `docs/八股/` 题纸 |
-| **B2 · Agent 开发八股** | 同上，主题是 LLM / Prompt / ReAct / Tool / MCP / RAG | `docs/agent考点.md` 打勾 + `docs/八股/` 题纸 |
-| **C · 力扣手撕** | 每天 2 题，限时 20 分钟/题 + 跑测试 | `docs/力扣hot100.md` 打勾 + `src/interview/*.ts` |
-| **✱ 简历对齐** | A 轨末尾挑简历上的一条词，用「① 干什么 ② 完整流程 ③ 为什么选它」讲 2 分钟 | `docs/简历映射.md` 打勾 + 卡壳记日志 |
+| **B · 八股（单轨交替）** | 单日 B1 前端 / 双日 B2 Agent，每次 **3 题 + 1 题项目落地**，开口讲不默读 | `docs/B1-前端八股考点.md` / `docs/B2-Agent八股考点.md` 打勾 + 题纸 |
+| **C · 力扣手撕** | 每天 2 题，限时 20 分钟/题 + 跑测试 | `docs/C-力扣Hot100题单.md` 打勾 + `src/interview/*.ts` |
+| **✱ 简历对齐** | A 轨末尾挑简历上的一条词，用「① 干什么 ② 完整流程 ③ 为什么选它」讲 2 分钟 | `docs/全轨-简历映射.md` 打勾 + 卡壳记日志 |
 
 - **依据一**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
 - **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
-- **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
-- **时间轴**：45 天（Day 4 = 10-15 已完成 → Day 48 = 11-28），日历与四轨排期见 `docs/学习计划.md`。
+- **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
+- **时间轴**：Day 6 = 2026-10-20 → Day 48 = 2026-12-01（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
 ## 当前进度
@@ -30,11 +31,12 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
-| Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 |
+| Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
+| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ 最长连续序列 / 移动零（C） | 🔄 |
 
-手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/力扣hot100.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
+手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-Day 5 待实现：`two-sum` / `group-anagrams` —— 13 个用例现在是**红的**，写完就绿。
+Day 5 / Day 6 待实现：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` —— 用例现在是**红的**，写完就绿。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -113,8 +115,8 @@ AI 面板的胶囊输入框选中文档后，会把它序列化成标记文本�
 - **主链路**：用户输入 → 前端 POST `/api/ai/chat` → 鉴权 / 幂等落库 / 拉历史 → `streamText` 驱动 Agent → 调用工具改库 → `onEvent` 上报副作用 → SSE 推回前端 → 前端按 `type` 分发（渲染文本 / 显示进度 / 跳转刷新 / 弹确认框）
 - **关键前提**：工具跑在**服务端**，前端看不见它的内部执行，所以副作用必须显式上报
 
-产出：`docs/讲稿/day04-架构通读.md`（v1，60 秒口述稿）。
-完整版见 `docs/架构总览.md`。
+产出：`docs/讲稿/day04-A-架构通读.md`（v1，60 秒口述稿）。
+完整版见 `docs/A-架构总览.md`。
 
 ### C 轨 · 手撕 01 —— EventEmitter
 
@@ -141,7 +143,7 @@ B站 / CSIG / 腾讯云智一面高频（★★★）。铁律是：**跑完一�
 - `return Promise` / `await` thenable 比普通值**多等 2 个 tick**（FIFO 队伍推演）
 - 微任务合并（同一轮去重）≠ debounce（等用户停下来）；3 个不同宏任务各改 1 次，微任务合并会失效
 
-题纸 22 题 + 实跑标准答案见 `docs/八股/day04-事件循环-题目.md` / `day04-事件循环-答案.md`；首刷 7/12，错题本见 `docs/日志/day04.md`。
+题纸 22 题 + 实跑标准答案见 `docs/八股/day04-B1-事件循环-题目.md` / `day04-B1-事件循环-答案.md`；首刷 7/12，错题本见 `docs/日志/day04-全轨-日志.md`。
 
 ## 技术栈
 
@@ -152,55 +154,69 @@ B站 / CSIG / 腾讯云智一面高频（★★★）。铁律是：**跑完一�
 
 ## 目录结构
 
+> 命名规则：`dayNN-<轨>-<主题>`；**轨 = A（MyLotion）/ B1（前端八股）/ B2（Agent 八股）/ C（力扣手撕）**。
+> 全时段文档用 `00-`（元文档）、`全轨-`（跨轨）或直接以轨名开头。完整对照表见 `docs/00-文件索引.md`。
+
 ```
 MyLotion-main/
 ├── src/
-│   ├── tree.ts                 # Day 1：buildTree —— 扁平数组还原成文档树
-│   ├── subtree.ts              # Day 2：collectSubtreeIds —— 一次算出整棵子树
-│   ├── mention.ts              # Day 3：extractMentions / truncateMentionTitle —— @提及解析
-│   ├── interview/
-│   │   ├── event-emitter.ts    # 手撕 01：EventEmitter（on/once/off/emit，12/12 ✅）
-│   │   ├── two-sum.ts          # Hot 100 · 两数之和（Day 5 待实现）
-│   │   └── group-anagrams.ts   # Hot 100 · 字母异位词分组（Day 5 待实现）
-│   └── test.js                 # 随手写的 JS 草稿
+│   ├── tree.ts                     # Day 1 · A 轨：buildTree
+│   ├── subtree.ts                  # Day 2 · A 轨：collectSubtreeIds
+│   ├── mention.ts                  # Day 3 · A 轨：extractMentions / truncateMentionTitle
+│   ├── data/
+│   │   └── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
+│   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
+│   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
+│   │   ├── two-sum.ts              # Day 5 · 待实现
+│   │   ├── group-anagrams.ts       # Day 5 · 待实现
+│   │   ├── longest-consecutive.ts  # Day 6 · 待实现
+│   │   └── move-zeroes.ts          # Day 6 · 待实现
+│   └── test.js                     # 随手写的 JS 草稿
 ├── test/
-│   ├── tree.test.ts
-│   ├── subtree.test.ts
-│   ├── mention.test.ts
-│   └── interview/
+│   ├── tree.test.ts                # Day 1 · A
+│   ├── subtree.test.ts             # Day 2 · A
+│   ├── mention.test.ts             # Day 3 · A
+│   ├── data/
+│   │   └── documents.test.ts       # Day 6 · A（12 用例 ✅）
+│   └── interview/                  # Day 4~6 · C
 │       ├── event-emitter.test.ts
 │       ├── two-sum.test.ts
-│       └── group-anagrams.test.ts
+│       ├── group-anagrams.test.ts
+│       ├── longest-consecutive.test.ts
+│       └── move-zeroes.test.ts
 ├── docs/
-│   ├── 学习策略.md              # 为什么这么学（依据 8 场面经）
-│   ├── 学习计划.md              # 45 天四轨日历 + 讲稿版本机制 + 完善路线
-│   ├── 架构总览.md              # Lotion 端到端全流程 + 边界与演进
-│   ├── 简历映射.md              # 简历上的词 → 项目里的角色 → 会被追问什么（考纲）
-│   ├── 面经考点.md              # 前端八股考点清单（B1）+ STAR 故事库 + 反问清单
-│   ├── agent考点.md             # Agent 开发八股考点清单（B2）
-│   ├── 力扣hot100.md            # 力扣 Hot 100 题单 + 打卡（C 轨主线）
-│   ├── 讲稿/
+│   ├── 00-文件索引.md              # ★ 所有文件 × Day × 轨 的总表
+│   ├── 00-学习策略.md              # 为什么这么学（8 场面经 + 简历即考纲）
+│   ├── 00-学习计划.md              # 45 天四轨日历 + 节奏规则 + 完善路线
+│   ├── A-架构总览.md               # A 轨主线：三层 / 主链路 / 边界与演进
+│   ├── 全轨-简历映射.md            # 简历上的词 → 项目角色 → 会被追问什么
+│   ├── B1-前端八股考点.md          # B1 清单 + STAR 故事库 + 反问清单
+│   ├── B2-Agent八股考点.md         # B2 清单（LLM / Prompt / Agent / Tool / MCP / RAG）
+│   ├── C-力扣Hot100题单.md         # C 轨题单 + 打卡
+│   ├── 讲稿/                        # A 轨讲稿（day04-C 为 C 轨题解）
 │   │   ├── _模板.md
-│   │   ├── 示例-day01-buildTree.md
-│   │   ├── day04-架构通读.md    # Day 4 讲稿 v1
-│   │   ├── day04-C-手撕01-EventEmitter.md   # 手撕 01 题解 + 追问预判
-│   │   └── day05-架构自绘.md    # Day 5 A 轨：自己画架构图 + 主链路
-│   ├── 八股/
-│   │   ├── day04-事件循环-题目.md
-│   │   ├── day04-事件循环-答案.md
-│   │   ├── day05-输出题与async形态-题目.md   # Day 5 B1
-│   │   ├── day05-输出题与async形态-答案.md   # 实跑输出 + tick 实测
-│   │   ├── day05-agent基础-题目.md           # Day 5 B2
-│   │   └── day05-agent基础-答案.md           # 口述版
+│   │   ├── day01-A-示例-buildTree.md
+│   │   ├── day04-A-架构通读.md
+│   │   ├── day04-C-手撕01-EventEmitter.md
+│   │   ├── day05-A-架构自绘.md
+│   │   ├── day06-A-数据层.md
+│   │   └── 术语人话版.md           # 全轨通用
+│   ├── 八股/                        # B1 / B2 题纸与答案
+│   │   ├── day04-B1-事件循环-题目.md / 答案.md
+│   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
+│   │   ├── day05-B2-LLM基础与Prompt-题目.md / 答案.md
+│   │   └── day06-B1-闭包-题目.md
 │   ├── 速记/
-│   │   └── day05-速记.md        # 路上/等电梯速记卡（另有 QQ 纯文本版 .txt）
+│   │   ├── day05-A-速记.md
+│   │   └── day05-A-速记-qq版.txt
 │   └── 日志/
-│       └── day04.md             # Day 4 收官记录 + 错题本
+│       ├── day04-全轨-日志.md
+│       ├── day05-全轨-日志.md
+│       └── day06-全轨-日志.md
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
 ```
-
 ## 快速开始
 
 ### 前置要求
@@ -236,7 +252,7 @@ npx vitest run test/interview/
 - [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
-> 完整排期与每日任务见 `docs/学习计划.md`。
+> 完整排期与每日任务见 `docs/00-学习计划.md`。
 
 ## 参考
 
