@@ -12,7 +12,7 @@
 
 ```sql
 create table documents (
-  id              uuid primary key default gen_random_uuid(),
+  id              uuid        primary key default gen_random_uuid(),
   title           text        not null default '',
   content         jsonb,                          -- BlockNote 的文档 JSON
   parent_document uuid        references documents(id) on delete cascade,
