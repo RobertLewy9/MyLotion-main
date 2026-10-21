@@ -32,7 +32,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
 | Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
-| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ 最长连续序列 / 移动零（C） | 🔄 |
+| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 核心（B2）+ 两道题解（C） | 🔄 |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
@@ -200,12 +200,15 @@ MyLotion-main/
 │   │   ├── day04-C-手撕01-EventEmitter.md
 │   │   ├── day05-A-架构自绘.md
 │   │   ├── day06-A-数据层.md
+│   │   ├── day06-C-最长连续序列.md
+│   │   ├── day06-C-移动零.md
 │   │   └── 术语人话版.md           # 全轨通用
 │   ├── 八股/                        # B1 / B2 题纸与答案
 │   │   ├── day04-B1-事件循环-题目.md / 答案.md
 │   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
 │   │   ├── day05-B2-LLM基础与Prompt-题目.md / 答案.md
-│   │   └── day06-B1-闭包-题目.md
+│   │   ├── day06-B1-闭包-题目.md / 答案.md
+│   │   └── day06-B2-Agent核心-题目.md / 答案.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt
