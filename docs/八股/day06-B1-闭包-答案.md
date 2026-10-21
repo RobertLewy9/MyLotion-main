@@ -7,23 +7,7 @@
 ## Part 1 · 概念（各 3 分钟）
 
 ### 1. 闭包是什么？产生的三个条件？
-```js
-function outer() {
-  let count = 0;
 
-  function inner() {
-    count++;
-    console.log(count);
-  }
-
-  return inner;
-}
-
-const fn = outer();
-
-fn(); // 1
-fn(); // 2
-```
 **一句话**：闭包是**函数 + 它定义时所在的词法环境**；函数被带到外面执行，仍然能访问那个环境里的变量。
 
 **展开**：关键在「**词法作用域在定义时确定，不是调用时确定**」。
@@ -50,10 +34,27 @@ next(); // 2
 
 ### 2. 闭包会造成内存泄漏吗？什么情况下才是真的泄漏？
 
-**一句话**：闭包**持有引用**，但「持有」不等于「泄漏」；泄漏是「**该释放的对象，还被一个长期可达的根引用着**」。
+**一句话**：闭包本身不会必然造成内存泄漏。闭包会让函数继续访问它所需要的外部变量，只要这个函数仍然可达，相关变量就可能需要继续保留。
 
-**展开**：现代引擎的垃圾回收看**可达性**。闭包本身不可达了，它捕获的变量会一起被回收。
-真正会泄漏的是这几种：
+真正需要关注的是：某些对象已经没有业务上的使用价值，却因为仍然存在可达引用而无法被垃圾回收，导致内存持续占用甚至不断增长。
+
+例如：
+```js
+function createHandler() {
+  const largeData = new Array(1000000).fill("data");
+
+  return function handler() {
+    console.log(largeData.length);
+  };
+}
+
+const handler = createHandler();
+```
+只要 handler 仍然可达，而且它需要访问 largeData，相关数据就可能继续保留。
+如果后续不再需要这个处理函数，就应当解除不必要的引用：
+```js
+handler = null;
+```
 
 1. **定时器没清**：`setInterval` 的回调是闭包，闭包里引用了大对象，`clearInterval` 不调用就一直活着；
 2. **事件监听没移除**：组件卸载了，监听器还挂在 `window` / `document` 上；
@@ -61,7 +62,12 @@ next(); // 2
 4. **无上限缓存 / 全局数组**：缓存 key 无限增长，每个 value 又是闭包。
 
 **判断方法**：问自己两句 ——「这个闭包还能被谁访问？」「它引用的东西现在还需要吗？」
-**处理**：`clearInterval` / `removeEventListener` / 用完置 `null` / 对象做 key 的缓存用 `WeakMap`。
+四种情况对比
+情况	        谁一直持有引用？	                应该怎么处理？
+定时器没清	   定时器系统持有回调	               clearInterval / clearTimeout
+监听器没移除	 window / document               持有回调	removeEventListener
+游离 DOM	    JS 变量或闭包持有 DOM	            解除不需要的引用
+无上限缓存	   全局数组或 Map 持有函数和数据	    清理、限容、设置淘汰策略
 
 **反例**：每次调用都创建一个闭包，不等于泄漏 —— 只要它执行完就不可达，GC 会收走。
 
@@ -103,7 +109,6 @@ function curry(fn: AnyFn) {
   };
 }
 ```
-
 验证：
 
 ```js
@@ -167,14 +172,73 @@ c(1, 2, 3);   // 6
 
 **Q2：多用户并发会不会串？**
 看闭包在哪里创建。**按请求创建**（每个 handler 一次）就天然隔离；
-**模块级单例**就会串。所以 `createdNoteId` 放在按请求创建的工具实例里是安全的；
-`pendingById` 是模块级，但 key 是全局唯一的文档 id，也安全。要是 key 换成 `userId` 就要格外小心。
+**模块级单例**就会串。所以 `createdNoteId` 放在按请求创建的工具实例里是安全的，保存的是“当前这轮对话创建了哪篇笔记”，不同请求应该有不同的值；
+```js
+// 模块加载时创建一次，后续请求共享它
+let createdNoteId = null;
+
+function createNote(id) {
+  if (createdNoteId) {
+    return createdNoteId;
+  }
+
+  createdNoteId = id;
+  return id;
+}
+假设用户 A 先调用：
+createNote("A的笔记");
+此时 createdNoteId 变成 "A的笔记"。
+用户 B 再调用：
+createNote("B的笔记");
+结果却返回 "A的笔记"，因为这个变量已经有值了！
+```
+
+`pendingById` 是模块级,保存的是“某篇文档当前有没有正在执行的请求”，但 key 是全局唯一的文档 id，也安全。要是 key 换成 `userId` 就要格外小心。
+```js
+const pendingById = new Map();
+function getById(id) {
+  if (pendingById.has(id)) {
+    return pendingById.get(id);
+  }
+  const promise = fetchDocument(id).finally(() => {
+    pendingById.delete(id);
+  });
+  pendingById.set(id, promise);
+  return promise;
+}
+```
+
 
 **Q3：循环里 `var` 和 `let` 的经典题？**
 `var` 是函数作用域，循环里只有一个变量，所有回调共享它，最后都拿到最终值；
-`let` 是块级作用域，每轮循环创建一个新的绑定，回调各自记住自己那轮的变量。
+`let` 是块级作用域，let 在 for 循环中会为每轮迭代提供独立的绑定，所以每个回调都能读取自己那轮的 i。
 用 `var` 时想隔离，就得用 IIFE 手动造一个闭包。
+```js
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => {
+    console.log(i);
+  }, 100);
+}
+```
+
+
 
 **Q4：闭包捕获的是「值」还是「变量」？**
 捕获的是**变量（绑定）**，不是创建时的快照。所以闭包能看到这个变量之后的变化 ——
 这也是 `var` 循环题会全部输出同一个值的原因。
+```js
+function outer() {
+  let count = 0;
+
+  return function inner() {
+    console.log(count);
+  };
+}
+const fn = outer();
+fn(); // 0
+// 修改闭包访问的同一个变量
+// 假设修改操作也发生在 outer 的作用域内
+```
+
+最后，面试时可以把 Q2 和 Q4 串起来回答：
+闭包能够让函数在外层函数执行完之后，继续访问外层作用域中的变量。但是否会发生多用户数据串扰，取决于闭包对应的状态实例是否被多个请求共享。如果每个请求独立创建工具实例，状态通常是隔离的；如果状态放在模块级单例中，多个请求就可能共享它。模块级状态也不是一定错误，比如请求去重就可能需要共享 Promise，但必须正确设计 key、权限和生命周期。
