@@ -20,7 +20,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 - **依据一**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
 - **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
 - **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
-- **时间轴**：Day 6 = 2026-10-20 → Day 48 = 2026-12-01（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
+- **时间轴**：Day 7 = 2026-10-23 → Day 48 = 2026-12-03（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
 ## 当前进度
@@ -33,10 +33,11 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
 | Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
 | Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 核心（B2）+ 两道题解（C） | 🔄 |
+| Day 7 | 全量建树 / 懒加载模块（A）+ this/call/apply/bind（B1）+ 清 C 轨欠账 | 🔄 |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-Day 5 / Day 6 待实现：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` —— 用例现在是**红的**，写完就绿。
+**C 轨暂停上新**：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` 四道欠账清零前不加新题（用例仍是红的，写完就绿）。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -164,7 +165,8 @@ MyLotion-main/
 │   ├── subtree.ts                  # Day 2 · A 轨：collectSubtreeIds
 │   ├── mention.ts                  # Day 3 · A 轨：extractMentions / truncateMentionTitle
 │   ├── data/
-│   │   └── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
+│   │   ├── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
+│   │   └── sidebar.ts              # Day 7 · A 轨：getSidebarTree / getChildren / createSidebarIndex（10 用例 ✅）
 │   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
 │   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
 │   │   ├── two-sum.ts              # Day 5 · 待实现
@@ -177,7 +179,8 @@ MyLotion-main/
 │   ├── subtree.test.ts             # Day 2 · A
 │   ├── mention.test.ts             # Day 3 · A
 │   ├── data/
-│   │   └── documents.test.ts       # Day 6 · A（12 用例 ✅）
+│   │   ├── documents.test.ts       # Day 6 · A（12 用例 ✅）
+│   │   └── sidebar.test.ts         # Day 7 · A（10 用例 ✅）
 │   └── interview/                  # Day 4~6 · C
 │       ├── event-emitter.test.ts
 │       ├── two-sum.test.ts
@@ -200,6 +203,7 @@ MyLotion-main/
 │   │   ├── day04-C-手撕01-EventEmitter.md
 │   │   ├── day05-A-架构自绘.md
 │   │   ├── day06-A-数据层.md
+│   │   ├── day07-A-全量拉取与懒加载.md
 │   │   ├── day06-C-最长连续序列.md
 │   │   ├── day06-C-移动零.md
 │   │   └── 术语人话版.md           # 全轨通用
@@ -208,14 +212,16 @@ MyLotion-main/
 │   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
 │   │   ├── day05-B2-LLM基础与Prompt-题目.md / 答案.md
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
-│   │   └── day06-B2-Agent核心-题目.md / 答案.md
+│   │   ├── day06-B2-Agent核心-题目.md / 答案.md
+│   │   └── day07-B1-this与call-apply-bind-题目.md / 答案.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt
 │   └── 日志/
 │       ├── day04-全轨-日志.md
 │       ├── day05-全轨-日志.md
-│       └── day06-全轨-日志.md
+│       ├── day06-全轨-日志.md
+│       └── day07-全轨-日志.md
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
