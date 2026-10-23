@@ -23,11 +23,13 @@
 
 ## C. Agent 核心概念
 
+> 2026-10-23 校准：8 场只问 tool/skill/subagent/agent 与 MCP；ReAct、停止条件、planner/reflection 留作拓展，不进入当前必背。
+
 - [ ] ★★★ Agent 和「一次模型调用」的区别；Agent 和 workflow 的区别
-- [ ] ★★★ ReAct：思考 → 行动 → 观察 的循环
-- [ ] ★★★ Agent loop 的停止条件：步数上限 / 不再调用工具 / 命中终止工具
-- [ ] ★★ 规划（planning）与反思（reflection）分别解决什么
-- [ ] ★★ 单 Agent vs 多 Agent：什么时候需要拆（上下文隔离 / 职责分离）
+- [ ] **拓展（不计入 8 场必做）** ReAct：思考 → 行动 → 观察 的循环
+- [ ] **拓展（不计入 8 场必做）** Agent loop 的停止条件：步数上限 / 不再调用工具 / 命中终止工具
+- [ ] **拓展（不计入 8 场必做）** 规划（planning）与反思（reflection）分别解决什么
+- [ ] **拓展（不计入 8 场必做）** 单 Agent vs 多 Agent：什么时候需要拆（上下文隔离 / 职责分离）
 - [ ] ★ 上下文过长时 Agent 会出什么问题：遗忘、跑偏、成本爆炸
 
 ## D. Tool / Function Calling（面试最常追）

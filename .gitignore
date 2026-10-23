@@ -2,3 +2,5 @@ node_modules/
 .env
 .env.local
 *.log
+# 面试资料（仅本地参考，不推送）
+实习面试_by柴师姐/
