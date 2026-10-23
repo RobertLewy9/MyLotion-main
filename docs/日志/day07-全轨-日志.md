@@ -1,13 +1,14 @@
 # Day 7 · 2026-10-23 · 全轨记录（进行中）
 
 > **归属：Day 7 · 全轨（进行中 + 错题本）**
+> 2026-10-23 面经校准：B1 只保留 CSIG 实际问过的箭头函数 / this / call-apply-bind 概念，不要求写 polyfill。
 
 ## 今日任务
 
 | 轨 | 内容 | 状态 |
 |----|------|------|
 | A · MyLotion | 读 `src/data/sidebar.ts` + `docs/讲稿/day07-A-全量拉取与懒加载.md` | ⬜ |
-| B1 · 前端八股 | `docs/八股/day07-B1-this与call-apply-bind-题目.md`（25 分钟） | ⬜ |
+| B1 · 前端八股 | `docs/八股/day07-B1-this与call-apply-bind-题目.md`（箭头函数与 this，15 分钟，校准版） | ⬜ |
 | C · 力扣 | **清欠账**：两数之和 + 字母异位词分组 | ⬜ |
 | ✱ 简历对齐 | 挑一条讲 2 分钟（建议 `无限层级懒加载` 或 `Supabase`） | ⬜ |
 

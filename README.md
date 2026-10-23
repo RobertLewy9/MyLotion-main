@@ -21,6 +21,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 - **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
 - **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
 - **时间轴**：Day 7 = 2026-10-23 → Day 48 = 2026-12-03（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
+- **难度校准**：Day 4–7 已按 8 份面经重新筛选，超纲的 tick 推演、curry 实现、bind polyfill、Prompt 大专题已移出必做；依据见 docs/00-Day4-7-面经校准.md。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
 ## 当前进度
@@ -31,9 +32,9 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
-| Day 5 | 画架构图 + 输出题/async 形态（B1）+ LLM 基础/Prompt（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
-| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 核心（B2）+ 两道题解（C） | 🔄 |
-| Day 7 | 全量建树 / 懒加载模块（A）+ this/call/apply/bind（B1）+ 清 C 轨欠账 | 🔄 |
+| Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
+| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | 🔄 |
+| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ 清 C 轨欠账 | 🔄 |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
@@ -134,17 +135,20 @@ IEG 一面题。核心是一张 `Map<事件名, 监听器数组>`，三个细节
 
 题解与追问预判见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
 
-### B 轨 · 事件循环（宏 / 微任务 + Promise 时机）
+### B 轨 · 事件循环（面经校准版）
 
-B站 / CSIG / 腾讯云智一面高频（★★★）。铁律是：**跑完一个宏任务 → 清空微任务（直到空）→ 只有这时才轮到渲染 → 再取下一个宏任务**。
+B站 / CSIG / 腾讯云智一面确实问，但实际深度是：**同步代码跑完 → 清空微任务 → 取一个宏任务**，
+再加一道输出题。当前题纸只保留 **4 概念 + 4 输出 + 1 项目场景**，约 20 分钟。
 
-- **渲染窗口只存在于宏任务之间**：实测微任务连排 20 万次期间，一个 `setTimeout(0)` 完全没机会跑；宏任务递归时它立刻就跑
-- `await` 右边的表达式**立即求值**，让位的只是它后面的代码
-- `new Promise(executor)` 的 executor **同步执行**
-- `return Promise` / `await` thenable 比普通值**多等 2 个 tick**（FIFO 队伍推演）
-- 微任务合并（同一轮去重）≠ debounce（等用户停下来）；3 个不同宏任务各改 1 次，微任务合并会失效
+保留的四个判断点：
 
-题纸 22 题 + 实跑标准答案见 `docs/八股/day04-B1-事件循环-题目.md` / `day04-B1-事件循环-答案.md`；首刷 7/12，错题本见 `docs/日志/day04-全轨-日志.md`。
+- Promise 回调是微任务，`setTimeout` 是宏任务；
+- `new Promise(executor)` 的 executor 同步执行；
+- `async` 函数同步跑到第一个 `await`，后面的续体是微任务；
+- 一个微任务里新排的任务进队尾，要等本轮已排队的微任务跑完。
+
+题纸与答案见 `docs/八股/day04-B1-事件循环-题目.md` / `答案.md`。
+`process.nextTick` 与 Promise 的先后、thenable 多 tick、4ms 定时器饥饿、React 18 批处理不在本轮 8 场面经的追问范围里，已移出必做。
 
 ## 技术栈
 
@@ -210,7 +214,7 @@ MyLotion-main/
 │   ├── 八股/                        # B1 / B2 题纸与答案
 │   │   ├── day04-B1-事件循环-题目.md / 答案.md
 │   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
-│   │   ├── day05-B2-LLM基础与Prompt-题目.md / 答案.md
+│   │   ├── day05-B2-LLM基础-题目.md / 答案.md
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
 │   │   ├── day06-B2-Agent核心-题目.md / 答案.md
 │   │   └── day07-B1-this与call-apply-bind-题目.md / 答案.md
@@ -256,8 +260,8 @@ npx vitest run test/interview/
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（首刷 7/12）；C 手撕 01 `EventEmitter`
-- [ ] **Day 5** —— 自己画架构图 + 主链路；B1 输出题与 `async/await` 形态；B2 Agent 八股（LLM 基础 + Prompt）；C Hot 100 开篇（两数之和 / 字母异位词分组）
+- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（4 概念 + 4 输出）；C 手撕 01 `EventEmitter`
+- [ ] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
 - [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
