@@ -13,7 +13,9 @@
 
 **3.** `fn.call(ctx)`、`fn.apply(ctx, args)`、`fn.bind(ctx)` 有什么共同点？对箭头函数为什么无效？
 
-## Part 2 · 输出题（1 分钟）
+## Part 2 · 典例推演（2 分钟）
+
+先不看答案，逐行预测输出，并说出每一行的 `this` 从哪里来：
 
 ```js
 function Outer() {
@@ -25,11 +27,19 @@ function Outer() {
 const o = new Outer();
 console.log(o.normal.call({ name: "ctx" }));
 console.log(o.arrow.call({ name: "ctx" }));
+
+const detached = o.normal;
+console.log(detached.call({ name: "detached" }));
+
+const bound = o.normal.bind({ name: "bound" });
+console.log(bound.call({ name: "call" }));
 ```
+
+重点解释：普通函数的 `call` 为什么生效、箭头函数的 `call` 为什么无效、`bind` 后再 `call` 谁优先。
 
 ## Part 3 · 项目落地（2 分钟）
 
-React 类组件里为什么常见 `this.handleClick = this.handleClick.bind(this)`？
+React 类组件里为什么常见 `this.handleClick = this.handleClick.bind(this)`？除了构造器绑定，还能用什么写法？
 函数组件为什么没有这个问题？
 
 > 面试只需要说清「传函数引用后独立调用，this 丢了」和「函数组件靠闭包拿 props/state」。
