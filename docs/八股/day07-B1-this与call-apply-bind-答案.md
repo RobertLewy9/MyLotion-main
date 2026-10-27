@@ -15,6 +15,33 @@
 
 一个常见坑：`const f = obj.fn; f()` 已经不是 `obj.fn()`，会退回默认绑定。
 
+### 典例：盯住调用点
+
+```js
+const user = {
+  name: "小明",
+  getName() { return this.name; }
+};
+
+console.log(user.getName()); // 小明：点号左边是 user，隐式绑定
+
+const getName = user.getName;
+console.log(getName.call({ name: "小王" })); // 小王：call 显式指定 this
+
+const fixedName = getName.bind({ name: "小李" });
+console.log(fixedName.call({ name: "小周" })); // 小李：bind 固定的 this 不被后续 call 覆盖
+```
+
+`new` 的优先级更高：
+
+```js
+function User(name) { this.name = name; }
+const BoundUser = User.bind({ name: "这个对象会被忽略" });
+console.log(new BoundUser("Ada").name); // Ada：作为构造函数调用时，this 是新实例
+```
+
+记忆顺序：**先看 `new`，再看显式绑定，再看点号左边，最后看默认绑定。**
+
 ## 2. 箭头函数的 this
 
 箭头函数没有自己的 `this`，它在**定义时**采用外层词法环境的 `this`。也没有自己的 `arguments`，
@@ -23,25 +50,70 @@
 **适合**：回调、`map/filter`、React 函数组件内部的事件处理。
 **不适合**：对象方法、需要动态 `this` 的地方、需要 `new` 的地方。
 
+看这个例子：箭头函数在 `panel.makeReader()` 里面定义，拿到的是那次调用中 `makeReader` 的 `this`，也就是 `panel`。之后用 `call` 也改不了它。
+
+```js
+const panel = {
+  name: "panel",
+  makeReader() {
+    return () => this.name;
+  }
+};
+
+const readName = panel.makeReader();
+console.log(readName.call({ name: "other" })); // panel
+```
+
 ## 3. call / apply / bind
 
 - `call`：立即调用，参数逐个传；
 - `apply`：立即调用，参数放数组；
 - `bind`：返回一个绑定了 `this` 和部分参数的新函数，不立即调用。
 
+```js
+function greet(prefix, suffix) { return `${prefix}，${this.name}${suffix}`; }
+const ctx = { name: "小明" };
+
+greet.call(ctx, "你好", "！");       // 立即调用，参数逐个传
+greet.apply(ctx, ["早上好", "！"]); // 立即调用，参数放数组
+const sayHi = greet.bind(ctx, "你好");
+sayHi("！");                         // 之后调用，前缀已预先绑定
+```
+
 它们都只能改变**普通函数调用时的 this**。箭头函数的 `this` 在定义时已经固定，所以三种方法都改不了它。
 
 ## Part 2 · 输出题
+
+```js
+function Outer() {
+  this.name = "outer";
+  this.normal = function () { return this.name; };
+  this.arrow = () => this.name;
+}
+
+const o = new Outer();
+console.log(o.normal.call({ name: "ctx" }));
+console.log(o.arrow.call({ name: "ctx" }));
+
+const detached = o.normal;
+console.log(detached.call({ name: "detached" }));
+
+const bound = o.normal.bind({ name: "bound" });
+console.log(bound.call({ name: "call" }));
+```
 
 输出：
 
 ```text
 ctx
 outer
+detached
+bound
 ```
 
 `o.normal.call({ name: "ctx" })` 用显式绑定，`this` 是传入的对象；
 `o.arrow.call(...)` 不能改变箭头函数的 `this`，它仍然取构造时的 `o`，所以是 `outer`。
+后两行分别演示普通函数脱离对象后由 `call` 指定 `this`，以及 `bind` 固定的 `this` 不会被后续 `call` 覆盖。
 
 ## Part 3 · 项目落地
 
@@ -55,9 +127,28 @@ class Panel extends React.Component {
 ```
 
 `this.handleClick` 传给 React 后，回调是**脱离对象单独调用**的；严格模式下 `this` 是 `undefined`，再调 `this.setState` 就报错。
-所以构造器里 `bind(this)`，或者用类字段箭头函数。
+常见修法有构造器里 `bind(this)`，或用类字段箭头函数：
 
-函数组件没有实例、没有 `this`，事件处理函数通过闭包拿到当前渲染的 props/state，所以不需要 bind。
+```jsx
+class Panel extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick() { this.setState({ open: true }); }
+}
+
+// 或者：handleClick = () => { this.setState({ open: true }); }
+```
+
+函数组件没有实例、没有 `this`，事件处理函数通过闭包拿到当前渲染的 props/state，所以不需要 bind：
+
+```jsx
+function Panel() {
+  const [open, setOpen] = useState(false);
+  return <button onClick={() => setOpen(true)}>打开</button>;
+}
+```
 
 ## 及格线
 
