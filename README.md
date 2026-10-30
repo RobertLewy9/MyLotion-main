@@ -20,7 +20,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 - **依据一**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
 - **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
 - **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
-- **时间轴**：Day 7 = 2026-10-23 → Day 48 = 2026-12-03（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
+- **时间轴**：Day 8 = 2026-10-29 → Day 48 = 2026-12-03（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
 - **难度校准**：Day 4–7 已按 8 份面经重新筛选，超纲的 tick 推演、curry 实现、bind polyfill、Prompt 大专题已移出必做；依据见 docs/00-Day4-7-面经校准.md。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
@@ -35,10 +35,11 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
 | Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | 🔄 |
 | Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ 清 C 轨欠账 | 🔄 |
+| Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ 最长子串 / 接雨水（C） | 🔄 材料就绪 |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-**C 轨暂停上新**：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` 四道欠账清零前不加新题（用例仍是红的，写完就绿）。
+**C 轨暂停上新**：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` 四道欠账清零前不加新题（用例仍是红的，写完就绿）。Day 8 的 `longest-substring` / `trap-rain-water` 已排进下一项，欠账清零后再开。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -170,13 +171,16 @@ MyLotion-main/
 │   ├── mention.ts                  # Day 3 · A 轨：extractMentions / truncateMentionTitle
 │   ├── data/
 │   │   ├── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
-│   │   └── sidebar.ts              # Day 7 · A 轨：getSidebarTree / getChildren / createSidebarIndex（10 用例 ✅）
+│   │   ├── sidebar.ts              # Day 7 · A 轨：getSidebarTree / getChildren / createSidebarIndex（10 用例 ✅）
+│   │   └── document-cache.ts       # Day 8 · A 轨：并发去重 + LRU 200（13 用例 ✅）
 │   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
 │   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
 │   │   ├── two-sum.ts              # Day 5 · 待实现
 │   │   ├── group-anagrams.ts       # Day 5 · 待实现
 │   │   ├── longest-consecutive.ts  # Day 6 · 待实现
-│   │   └── move-zeroes.ts          # Day 6 · 待实现
+│   │   ├── move-zeroes.ts          # Day 6 · 待实现
+│   │   ├── longest-substring.ts    # Day 8 · 待实现
+│   │   └── trap-rain-water.ts      # Day 8 · 待实现
 │   └── test.js                     # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts                # Day 1 · A
@@ -184,13 +188,16 @@ MyLotion-main/
 │   ├── mention.test.ts             # Day 3 · A
 │   ├── data/
 │   │   ├── documents.test.ts       # Day 6 · A（12 用例 ✅）
-│   │   └── sidebar.test.ts         # Day 7 · A（10 用例 ✅）
-│   └── interview/                  # Day 4~6 · C
+│   │   ├── sidebar.test.ts         # Day 7 · A（10 用例 ✅）
+│   │   └── document-cache.test.ts  # Day 8 · A（13 用例 ✅）
+│   └── interview/                  # Day 4~8 · C
 │       ├── event-emitter.test.ts
 │       ├── two-sum.test.ts
 │       ├── group-anagrams.test.ts
 │       ├── longest-consecutive.test.ts
-│       └── move-zeroes.test.ts
+│       ├── move-zeroes.test.ts
+│       ├── longest-substring.test.ts
+│       └── trap-rain-water.test.ts
 ├── docs/
 │   ├── 00-文件索引.md              # ★ 所有文件 × Day × 轨 的总表
 │   ├── 00-学习策略.md              # 为什么这么学（8 场面经 + 简历即考纲）
@@ -208,8 +215,11 @@ MyLotion-main/
 │   │   ├── day05-A-架构自绘.md
 │   │   ├── day06-A-数据层.md
 │   │   ├── day07-A-全量拉取与懒加载.md
+│   │   ├── day08-A-请求去重与内存缓存.md
 │   │   ├── day06-C-最长连续序列.md
 │   │   ├── day06-C-移动零.md
+│   │   ├── day08-C-无重复字符的最长子串.md
+│   │   ├── day08-C-接雨水.md
 │   │   └── 术语人话版.md           # 全轨通用
 │   ├── 八股/                        # B1 / B2 题纸与答案
 │   │   ├── day04-B1-事件循环-题目.md / 答案.md
@@ -217,7 +227,8 @@ MyLotion-main/
 │   │   ├── day05-B2-LLM基础-题目.md / 答案.md
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
 │   │   ├── day06-B2-Agent核心-题目.md / 答案.md
-│   │   └── day07-B1-this与call-apply-bind-题目.md / 答案.md
+│   │   ├── day07-B1-this与call-apply-bind-题目.md / 答案.md
+│   │   └── day08-B1-原型链与继承-题目.md / 答案.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt
@@ -225,7 +236,8 @@ MyLotion-main/
 │       ├── day04-全轨-日志.md
 │       ├── day05-全轨-日志.md
 │       ├── day06-全轨-日志.md
-│       └── day07-全轨-日志.md
+│       ├── day07-全轨-日志.md
+│       └── day08-全轨-日志.md
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
@@ -253,7 +265,7 @@ pnpm test:watch
 npx vitest run test/interview/
 ```
 
-> 注：Day 1~4 的 50 个用例全绿。Day 5 的两道 Hot 100 手撕题（`two-sum` / `group-anagrams`）是**待实现**状态，13 个用例保持红色，属预期 —— 写完就绿。
+> 注：Day 8 的 A 轨缓存新增 13 个绿色用例；C 轨 `two-sum` / `group-anagrams` / `longest-consecutive` / `move-zeroes` 以及 Day 8 两道新题仍是**待实现**，红色属预期 —— 写完就绿。
 
 ## 学习路线
 
