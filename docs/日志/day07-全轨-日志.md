@@ -9,6 +9,7 @@
 |----|------|------|
 | A · MyLotion | 读 `src/data/sidebar.ts` + `docs/讲稿/day07-A-全量拉取与懒加载.md` | ✅ |
 | B1 · 前端八股 | `docs/八股/day07-B1-this与call-apply-bind-题目.md`（箭头函数与 this，15 分钟，校准版） | ✅ |
+| B2 · Agent 八股 | `docs/八股/day07-B2-MCP与Skills-题目.md`（MCP 角色 / 三类能力 / trust boundary，20 分钟） | ✅ |
 | C · 力扣 | 两数之和 + 字母异位词分组（补打卡） | ✅ 力扣打卡完成（本地 TODO 待复写） |
 | ✱ 简历对齐 | 挑一条讲 2 分钟（建议 `无限层级懒加载` 或 `Supabase`） | ⬜ |
 

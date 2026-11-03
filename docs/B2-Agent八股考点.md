@@ -47,8 +47,8 @@
 
 - [x] ★★★ MCP 是什么、解决什么问题（一套统一的「模型 ↔ 工具/数据源」协议）
 - [x] ★★ MCP 和 Function Calling 的关系：MCP 管**怎么接**，Function Calling 管**怎么调**
-- [ ] ★★ MCP 里 server / client / host 分别是谁
-- [ ] ★ MCP 暴露的三类能力：tools / resources / prompts
+- [x] ★★ MCP 里 server / client / host 分别是谁
+- [x] ★ MCP 暴露的三类能力：tools / resources / prompts
 
 ## F. 记忆与 RAG
 
@@ -90,4 +90,4 @@
 - [ ] **SSE 流式**：为什么不用 WebSocket；断线重连与心跳；HTTP/1.1 六连接限制
 - [ ] **上下文压缩**：`[系统提示词] + [历史摘要] + [最近 100 条原文] + [当前输入]` 每段的作用；丢了什么；并发压缩怎么串行化
 - [ ] **危险操作确认闸门**：`deleteNote` 只上报 `confirm_delete`、用户确认才真删 —— 为什么这么设计
-- [ ] **MCP**：是什么、和 Function Calling 的关系、`tool` / `skill` / `subagent` 的区别（Lotion 未用，属行业认知，要能讲清）
+- [x] **MCP**：是什么、和 Function Calling 的关系、`tool` / `skill` / `subagent` 的区别（Lotion 未用，属行业认知，要能讲清）
