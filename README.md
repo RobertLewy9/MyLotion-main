@@ -34,7 +34,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
 | Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | ✅ |
 | Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | ✅ |
-| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ 清 C 轨欠账 | ✅ |
+| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ MCP 深入与 Skills（B2）+ 清 C 轨欠账 | ✅ |
 | Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ Agent Loop 与安全闸门（B2）+ 最长子串 / 接雨水（C） | ✅ |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
@@ -228,6 +228,7 @@ MyLotion-main/
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
 │   │   ├── day06-B2-Agent核心-题目.md / 答案.md
 │   │   ├── day07-B1-this与call-apply-bind-题目.md / 答案.md
+│   │   ├── day07-B2-MCP与Skills-题目.md / 答案.md
 │   │   ├── day08-B1-原型链与继承-题目.md / 答案.md
 │   │   └── day08-B2-Agent运行时-题目.md / 答案.md
 │   ├── 速记/
@@ -276,7 +277,7 @@ npx vitest run test/interview/
 - [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（4 概念 + 4 输出）；C 手撕 01 `EventEmitter`
 - [x] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
 - [x] **Day 6** —— 数据层取数；B1 闭包；B2 Agent 词汇 + Tool Calling；C 最长连续序列 / 移动零
-- [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；C 补打卡
+- [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；B2 MCP 深入与 Skills；C 补打卡
 - [x] **Day 8** —— 请求去重 + LRU；B1 原型链与继承；B2 Agent Loop 与安全闸门；C 最长子串 / 接雨水
 - [ ] **Day 9-42** —— 逐块点亮（前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
