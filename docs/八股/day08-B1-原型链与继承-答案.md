@@ -8,14 +8,17 @@
 
 ### 1. `prototype`、`[[Prototype]]`、`constructor`
 
-**一句话：**每个对象都有一条指向另一个对象的内部链接 `[[Prototype]]`，属性找不到时就沿这条链接继续找，
-一直找到 `null`；函数额外有一个 `.prototype` 属性，用来当它创建出来的实例的原型。
+**一句话：**
 
-| 名词 | 挂在哪 | 是什么 |
-|------|--------|--------|
-| `Constructor.prototype` | 函数对象上 | 一个普通对象，`new` 创建实例时，实例的 `[[Prototype]]` 指向它 |
-| 实例的 `[[Prototype]]` | 每个对象内部 | 原型链的下一跳；可用 `Object.getPrototypeOf(obj)` 读取 |
-| `prototype.constructor` | 构造函数的原型对象上 | 默认指回构造函数，方便从实例找到“谁创建了我” |
+原型机制主要是为了让多个对象共用方法。构造函数通过 `prototype` 提供一个公共位置，实例通过内部连接 `[[Prototype]]` 指向它。自己找不到属性时，就沿着这条连接往上找，这就是原型链。
+
+**三个术语：**
+
+| 名词 | 人话理解 |
+|---|---|
+| `Constructor.prototype` | 构造函数提供的公共位置，存放实例可以共用的方法 |
+| `[[Prototype]]` | 对象内部的连接，找不到属性时沿着它往上找 |
+| `prototype.constructor` | 默认指回对应的构造函数 |
 
 ```js
 function User(name) {
@@ -26,75 +29,58 @@ const user = new User("Ada");
 
 Object.getPrototypeOf(user) === User.prototype; // true
 User.prototype.constructor === User;            // true
-user.constructor === User;                      // true（沿原型链读取）
+user.constructor === User;                      // true
 ```
 
-`new User("Ada")` 可以拆成四步：
+**`new User("Ada")` 做了什么？**
 
 1. 创建一个新对象；
-2. 把这个对象的 `[[Prototype]]` 链到 `User.prototype`；
-3. 以这个对象为 `this` 执行 `User`；
-4. 构造函数没有返回另一个对象时，返回新对象。
+2. 将新对象的 `[[Prototype]]` 指向 `User.prototype`；
+3. 以新对象作为 `this` 执行构造函数；
+4. 没有显式返回另一个对象时，返回新对象。
 
-访问 `user.name` 时，先查实例自身；没有就查 `User.prototype`，再查 `Object.prototype`，最后到 `null`。
-这就是**原型链查找**。CSIG 上一题说箭头函数没有 `prototype`，原因也在这里：它不是普通构造函数，不能承担 `new` 的实例原型。
+**原型链查找：**
+
+访问 `user` 的属性时，先找自己，找不到就依次往上找：
+
+`user → User.prototype → Object.prototype → null`
+
+**补充：箭头函数为什么没有 `prototype`？**
+
+箭头函数不能作为构造函数，不能使用 `new` 创建实例，因此没有 `prototype` 属性。
+
+```js
+function fn() {}
+const arrow = () => {};
+
+fn.prototype;    // 有
+arrow.prototype; // undefined
+new arrow();      // TypeError
+```
+
+**面试总结：**
+
+原型机制用于实现对象之间的方法共享。构造函数通过 `prototype` 提供公共位置，实例通过 `[[Prototype]]` 指向它。访问属性时，如果自身找不到，就沿原型链向上查找，直到找到或到达 `null`。
+
 
 ### 2. JavaScript 的继承怎么实现
 
-**一句话：**JS 没有传统类继承，所谓继承就是把子构造函数的 `prototype` 挂到父构造函数的原型链上；
-`class extends` 只是把这套关系写得更清楚，并在语言层面补齐了构造、`super` 和静态方法继承。
+**一句话：**
 
-#### ES5：构造函数 + 原型链
+JS 继承的本质是通过原型链，让子类能够使用父类的属性和方法。现代开发中主要使用 `class extends` 实现。
 
-```js
-function Animal(name) {
-  this.name = name;
-}
-
-Animal.prototype.speak = function () {
-  return `${this.name} makes a sound`;
-};
-
-function Dog(name) {
-  Animal.call(this, name); // 借用父构造函数，初始化实例自己的属性
-  this.breed = "corgi";
-}
-
-// 实例方法继承：Dog.prototype 的原型指向 Animal.prototype
-Dog.prototype = Object.create(Animal.prototype);
-
-// 修回 constructor，否则 d.constructor 会读到 Animal
-Dog.prototype.constructor = Dog;
-
-Dog.prototype.speak = function () {
-  return `${Animal.prototype.speak.call(this)} / woof`;
-};
-
-const d = new Dog("Ada");
-console.log(d.speak());       // Ada makes a sound / woof
-console.log(d instanceof Dog);    // true
-console.log(d instanceof Animal); // true
-```
-
-三个关键动作：
-
-- `Animal.call(this, name)`：继承**实例属性**；
-- `Object.create(Animal.prototype)`：继承**原型方法**；
-- `Dog.prototype.constructor = Dog`：修正构造函数指针。
-
-不要在 ES5 里写 `Dog.prototype = new Animal()`。它会执行一次父构造函数，可能给原型塞进无意义的实例状态，
-还会把参数问题混进原型。`Object.create` 只建立链接，不执行父构造函数。
-
-#### ES6：`class extends` 建立的两条链
+**基本写法：**
 
 ```js
 class Animal {
   constructor(name) {
     this.name = name;
   }
+
   speak() {
     return `${this.name} makes a sound`;
   }
+
   static kind() {
     return "animal";
   }
@@ -102,120 +88,113 @@ class Animal {
 
 class Dog extends Animal {
   constructor(name) {
-    super(name); // 调父构造函数；在它之前不能访问 this
+    super(name); // 调用父类构造函数
     this.breed = "corgi";
   }
+
   speak() {
     return `${super.speak()} / woof`;
   }
 }
+
+const dog = new Dog("Ada");
+dog.speak(); // Ada makes a sound / woof
 ```
 
-`extends` 同时做了两件事：
+**三个核心知识点：**
+
+1. `extends`：让子类继承父类。
+2. `super()`：调用父类构造函数，必须在使用 `this` 之前调用。
+3. `super.method()`：调用父类的方法，`this` 仍指向当前实例。
+
+**原型链补充：**
 
 ```js
-Dog.prototype.__proto__ === Animal.prototype; // 实例方法沿这条链找
-Dog.__proto__ === Animal;                     // 静态方法沿这条链找
+Dog.prototype.__proto__ === Animal.prototype; // 实例方法继承
+Dog.__proto__ === Animal;                     // 静态方法继承
 ```
 
-所以：
+**面试总结：**
 
-- `d.speak()`：先找 `Dog.prototype.speak`；里面的 `super.speak()` 再沿 `Dog.prototype.[[Prototype]]` 找到 `Animal.prototype.speak`；
-- `Dog.kind()`：先找 `Dog` 自身，没有就沿 `Dog.[[Prototype]]` 找到 `Animal.kind`；
-- `super.speak()` 不是“调用父类的某个副本”，它用当前实例作为 `this`，只是把方法查找的起点移到父原型。
+JS 继承主要通过原型链实现。使用 `extends` 建立父子类关系，`super` 调用父类的构造函数和方法，从而实现属性和方法的复用。JS 的 class 继承有两条原型链：一条让子类实例继承父类的普通方法，另一条让子类本身继承父类的静态方法。
 
-### 3. 方法为什么放 `prototype`
+### 3. 为什么方法要放在 `prototype`？
 
-实例状态应该每个对象一份，方法则应该大家共享。
+**一句话：** 属性每个实例各有一份，公共方法可以共享，所以通常放在 `prototype` 上，节省内存。
 
 ```js
 function User(name) {
-  this.name = name; // 每个实例独有
+  this.name = name;
 }
 
 User.prototype.sayHi = function () {
-  return `hi, ${this.name}`; // 所有实例共享同一个函数对象
+  return `hi, ${this.name}`;
 };
 
 const a = new User("A");
 const b = new User("B");
+
 a.sayHi === b.sayHi; // true
 ```
 
-如果写成 `this.sayHi = function () {}`，每创建一个实例就会多创建一个函数，浪费内存。
-如果写成 `this.sayHi = () => {}`，函数还会捕获当前实例的 `this`，这又是另一种语义。
+如果方法写在 `this` 上，每创建一个实例就会多创建一个函数。
 
-`class` 和普通构造函数的差异主要有：
+**记住：属性放实例上，公共方法放 prototype 上。**
 
-- class 必须用 `new` 调用，裸调用会抛错；
-- class 声明有 TDZ，不能在声明前使用；函数声明会提升；
-- class 内部默认严格模式；
-- class 的方法默认不可枚举，普通 `prototype.method = ...` 默认可枚举；
-- 派生类必须在访问 `this` 前调用 `super()`（或在 `super()` 前 `return` 一个对象）。
-
-注意：不可枚举不代表不能访问，只是 `for...in`、`Object.keys(instance)` 这类枚举不会把原型方法列出来。
+---
 
 ## Part 2 · 典例推演
 
-```text
-Ada makes a sound / woof
-true
-true
-true
-animal
-true true
-false true
+```js
+Object.getPrototypeOf(d) === Dog.prototype; // true
+Object.getPrototypeOf(Dog.prototype) === Animal.prototype; // true
+Object.getPrototypeOf(Dog) === Animal; // true
+
+d instanceof Dog;     // true
+d instanceof Animal;  // true
 ```
 
-- `d.speak()`：实例自身没有 `speak`，沿 `Dog.prototype` 找到；`super.speak()` 再用当前实例 `d` 调父方法。
-- `Object.getPrototypeOf(d) === Dog.prototype`：`new Dog()` 把实例的原型设为 `Dog.prototype`。
-- `Object.getPrototypeOf(Dog.prototype) === Animal.prototype`：这是 `extends` 建立的实例方法继承链。
-- `Object.getPrototypeOf(Dog) === Animal`：这是 `extends` 建立的静态方法继承链。
-- `Dog.kind()`：`Dog` 自身没有 `kind`，沿静态原型链找到 `Animal.kind`。
-- `d instanceof Dog` / `d instanceof Animal`：`instanceof` 会沿原型链查找，两条都成立。
-- `speak` 不在实例自身上，而在 `Dog.prototype` 上，所以最后一行是 `false true`。
+**理解这几个结果：**
+
+- `d.speak()`：沿原型链查找方法。
+- `Object.getPrototypeOf(d)`：查看实例的原型。
+- `Object.getPrototypeOf(Dog.prototype)`：查看父类的原型。
+- `Object.getPrototypeOf(Dog)`：查看父类本身，对应静态方法继承。
+- `instanceof`：检查父类或子类的 `prototype` 是否在实例的原型链上。
+
+---
 
 ## Part 3 · 项目落地
 
-### 1. 为什么 MyLotion 不用文档类继承
+### 1. 为什么 MyLotion 不用文档类继承？
 
-MyLotion 的文档来自数据库 JSON，核心字段是：
+MyLotion 的文档来自数据库，主要是普通对象：
 
 ```ts
 interface DocumentRow {
   id: string;
   parentDocument: string | null;
   title: string;
-  // ...
 }
 ```
 
-“文件夹 / 文件”的区别其实是数据里的父子关系，不是两套不同的对象行为。用类继承会有三个麻烦：
-
-1. **序列化不对齐**：Supabase 返回普通对象，React state 也期望普通不可变对象；类实例要多一层转换。
-2. **错误抽象**：文件夹和文档都可以被移动、归档、改名，差异小于共性，拆成 `FolderDocument` / `FileDocument` 会把共同逻辑切碎。
-3. **继承层次脆弱**：以后加“公开页面”“模板”“数据库视图”，很容易变成多层 `extends`。行为更适合用纯函数和组合拼起来。
-
-所以项目里是：
+项目使用：
 
 ```text
 DocumentRow（普通数据）
-   + buildTree / collectSubtreeIds / selectSidebarRows（纯函数行为）
-   + Map 索引（组合出的查询能力）
+  + buildTree / collectSubtreeIds（纯函数）
+  + Map 索引（辅助查询）
 ```
 
-而不是：
+而不是把文件夹、文件拆成不同的继承类。
 
-```text
-BaseDocument
-  ├─ FolderDocument
-  └─ FileDocument
-       └─ PublishedFileDocument
-```
+**原因：**
+
+1. 数据库返回普通对象，直接使用更方便。
+2. 文件夹和文件有很多共同操作，不需要重复设计继承类。
+3. 组合更灵活，避免继承层次越来越复杂。
 
 ### 2. TS 的 `interface extends` 不是原型继承
-
-`src/tree.ts` 里有：
 
 ```ts
 interface SidebarDocument {
@@ -228,13 +207,13 @@ interface TreeNode extends SidebarDocument {
 }
 ```
 
-这是**编译期的类型扩展**：让 `TreeNode` 拥有 `SidebarDocument` 的字段约束。
-编译成 JavaScript 后，interface 完全消失，运行时没有原型链，也不会创建构造函数。
-面试里不要把「TS interface 继承」和「JS prototype 继承」混为一谈。
+这里的 `extends` 只是**类型扩展**，让 `TreeNode` 拥有父接口的字段约束。
 
-### 3. 真要区分多种文档类型怎么办
+编译成 JS 后，interface 会消失，不会建立原型链。
 
-优先用**组合 + 判别联合**，而不是深层继承：
+### 3. 多种文档类型怎么办？
+
+优先使用组合和判别联合，而不是多层类继承。
 
 ```ts
 type Document =
@@ -243,14 +222,16 @@ type Document =
   | { kind: "canvas"; scene: unknown };
 ```
 
-共同行为写成独立函数，用 `switch (doc.kind)` 或策略表分发；只有确实存在稳定的 is-a 关系、
-并且子类需要复用大量实现时，才考虑 class 继承。面试里这句话可以说成：
-**「优先组合（has-a），谨慎继承（is-a）。」**
+通过 `kind` 区分类型，再用 `switch` 处理不同逻辑。
+
+**核心思想：优先组合（has-a），谨慎继承（is-a）。**
+
+---
 
 ## 及格线
 
 能讲清三件事：
 
-- 属性查找沿 `[[Prototype]]` 走到 `null`；
-- ES5 用 `Object.create` 接原型链，ES6 `extends` 建立实例与静态两条链；
-- 项目里的文档模型用普通对象、纯函数和组合，不用类继承；TS interface extends 不产生运行时原型链。
+1. 属性放实例上，公共方法放 `prototype` 上，实现方法共享。
+2. JS 继承通过原型链实现；`extends` 同时建立实例方法和静态方法继承链。
+3. MyLotion 使用普通对象、纯函数和组合；TS `interface extends` 不产生运行时原型链。
