@@ -32,14 +32,14 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
 | Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
-| Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | 🔄 A/B ✅，C 待补 |
-| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | 🔄 |
-| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ 清 C 轨欠账 | 🔄 |
-| Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ 最长子串 / 接雨水（C） | 🔄 材料就绪 |
+| Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | ✅ |
+| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | ✅ |
+| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ 清 C 轨欠账 | ✅ |
+| Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ Agent Loop 与安全闸门（B2）+ 最长子串 / 接雨水（C） | ✅ |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-**C 轨暂停上新**：`two-sum`、`group-anagrams`、`longest-consecutive`、`move-zeroes` 四道欠账清零前不加新题（用例仍是红的，写完就绿）。Day 8 的 `longest-substring` / `trap-rain-water` 已排进下一项，欠账清零后再开。
+**C 轨进度**：Day 5–8 的 6 道 Hot 100 已按题单完成力扣打卡；仓库内对应 `src/interview/*.ts` 仍保留 TODO 作为本地复写靶子，红测不代表学习未完成。下一阶段从 Day 9 的「找到字符串中所有字母异位词 + 和为 K 的子数组」继续。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -175,12 +175,12 @@ MyLotion-main/
 │   │   └── document-cache.ts       # Day 8 · A 轨：并发去重 + LRU 200（13 用例 ✅）
 │   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
 │   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
-│   │   ├── two-sum.ts              # Day 5 · 待实现
-│   │   ├── group-anagrams.ts       # Day 5 · 待实现
-│   │   ├── longest-consecutive.ts  # Day 6 · 待实现
-│   │   ├── move-zeroes.ts          # Day 6 · 待实现
-│   │   ├── longest-substring.ts    # Day 8 · 待实现
-│   │   └── trap-rain-water.ts      # Day 8 · 待实现
+│   │   ├── two-sum.ts              # Day 5 · 力扣已打卡 / 本地待复写
+│   │   ├── group-anagrams.ts       # Day 5 · 力扣已打卡 / 本地待复写
+│   │   ├── longest-consecutive.ts  # Day 6 · 力扣已打卡 / 本地待复写
+│   │   ├── move-zeroes.ts          # Day 6 · 力扣已打卡 / 本地待复写
+│   │   ├── longest-substring.ts    # Day 8 · 力扣已打卡 / 本地待复写
+│   │   └── trap-rain-water.ts      # Day 8 · 力扣已打卡 / 本地待复写
 │   └── test.js                     # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts                # Day 1 · A
@@ -228,7 +228,8 @@ MyLotion-main/
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
 │   │   ├── day06-B2-Agent核心-题目.md / 答案.md
 │   │   ├── day07-B1-this与call-apply-bind-题目.md / 答案.md
-│   │   └── day08-B1-原型链与继承-题目.md / 答案.md
+│   │   ├── day08-B1-原型链与继承-题目.md / 答案.md
+│   │   └── day08-B2-Agent运行时-题目.md / 答案.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt
@@ -265,7 +266,7 @@ pnpm test:watch
 npx vitest run test/interview/
 ```
 
-> 注：Day 8 的 A 轨缓存新增 13 个绿色用例；C 轨 `two-sum` / `group-anagrams` / `longest-consecutive` / `move-zeroes` 以及 Day 8 两道新题仍是**待实现**，红色属预期 —— 写完就绿。
+> 注：Day 1–8 的学习与力扣打卡已完成；C 轨 6 道题的本地源码仍是 TODO，保留作为复写练习，因此全量测试暂为红测。A、B1、B2 轨材料与 Day 8 缓存用例已就绪。
 
 ## 学习路线
 
@@ -273,8 +274,11 @@ npx vitest run test/interview/
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
 - [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（4 概念 + 4 输出）；C 手撕 01 `EventEmitter`
-- [ ] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
-- [ ] **Day 5-42** —— 逐块点亮（数据层 → 前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
+- [x] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
+- [x] **Day 6** —— 数据层取数；B1 闭包；B2 Agent 词汇 + Tool Calling；C 最长连续序列 / 移动零
+- [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；C 补打卡
+- [x] **Day 8** —— 请求去重 + LRU；B1 原型链与继承；B2 Agent Loop 与安全闸门；C 最长子串 / 接雨水
+- [ ] **Day 9-42** —— 逐块点亮（前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
 > 完整排期与每日任务见 `docs/00-学习计划.md`。
