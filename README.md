@@ -31,7 +31,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ |
 | Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
 | Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
-| Day 4 | 认地图 + 事件循环（B1）+ 手撕 01（C） | ✅ |
+| Day 4 | 认地图 + 事件循环（B1）+ Agent 全景（B2）+ 手撕 01（C） | ✅ |
 | Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | ✅ |
 | Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | ✅ |
 | Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ MCP 深入与 Skills（B2）+ 清 C 轨欠账 | ✅ |
@@ -223,6 +223,7 @@ MyLotion-main/
 │   │   └── 术语人话版.md           # 全轨通用
 │   ├── 八股/                        # B1 / B2 题纸与答案
 │   │   ├── day04-B1-事件循环-题目.md / 答案.md
+│   │   ├── day04-B2-Agent全景-题目.md / 答案.md
 │   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
 │   │   ├── day05-B2-LLM基础-题目.md / 答案.md
 │   │   ├── day06-B1-闭包-题目.md / 答案.md
@@ -274,7 +275,7 @@ npx vitest run test/interview/
 - [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
 - [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
 - [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环（4 概念 + 4 输出）；C 手撕 01 `EventEmitter`
+- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环；B2 Agent 全景与请求链路；C 手撕 01 `EventEmitter`
 - [x] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
 - [x] **Day 6** —— 数据层取数；B1 闭包；B2 Agent 词汇 + Tool Calling；C 最长连续序列 / 移动零
 - [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；B2 MCP 深入与 Skills；C 补打卡

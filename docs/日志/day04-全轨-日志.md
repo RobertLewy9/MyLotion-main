@@ -2,15 +2,17 @@
 
 > **归属：Day 4 · 全轨（收官 + 错题本）**
 > 2026-10-23 面经校准：本页保留首刷历史；`process.nextTick` 精确排序、thenable 多 tick、4ms 定时器、React 18 批处理已移出必做，nextTick 只保留为微任务例子，二刷只重做基础题。
+> 2026-11-04 回补 B2：先建立 Agent 全景与一次请求链路，为 Day 5–8 的专题展开打底。
 > 原计划 Day 4 = 10-13，实际 10-15 起步。按 `docs/00-学习计划.md` 的弹性规则「整体顺延、不跳过」，
 > 日历已整体后移 2 天（Day 48 = 11-28）。
 
-## 三轨完成情况
+## 四轨完成情况
 
 | 轨 | 做了什么 | 产出物 | 状态 |
 |----|----------|--------|------|
 | A · MyLotion | 认地图：读 `docs/A-架构总览.md`，写讲稿 v1（三层结构 + 8 步主链路），自己补了 3 个问答 | `docs/讲稿/day04-A-架构通读.md` | ✅ |
-| B · 八股 | 事件循环：宏 / 微任务 + Promise 时机。旧版题纸 22 题（概念 7 / 输出 12 / 场景 3）+ 追问 4；输出题首刷 **7/12** | `docs/八股/day04-B1-事件循环-题目.md`、`day04-B1-事件循环-答案.md` | ✅ 首刷 |
+| B1 · 前端八股 | 事件循环：宏 / 微任务 + Promise 时机。旧版题纸 22 题（概念 7 / 输出 12 / 场景 3）+ 追问 4；输出题首刷 **7/12** | `docs/八股/day04-B1-事件循环-题目.md`、`day04-B1-事件循环-答案.md` | ✅ 首刷 |
+| B2 · Agent 八股 | Agent 全景：LLM / Prompt / Context / Tool / Function Calling / MCP / Skill / Agent 的分层，以及 Workflow vs Agent | `docs/八股/day04-B2-Agent全景-题目.md`、`day04-B2-Agent全景-答案.md` | ✅ |
 | C · 手撕 | 01 `EventEmitter`（on / once / off / emit），12 用例全绿 | `src/interview/event-emitter.ts`、`docs/讲稿/day04-C-手撕01-EventEmitter.md` | ✅ |
 
 ## 今天真正学到的
