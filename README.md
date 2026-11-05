@@ -1,6 +1,7 @@
 # MyLotion
 
 > 照着 Lotion 逐块拆解，把 AI 笔记应用的核心机制用可测试的纯 TS 复刻一遍 —— 目标是**讲清楚**，不是背代码。
+> **仓库**：[RobertLewy9/MyLotion-main](https://github.com/RobertLewy9/MyLotion-main) · **当前状态（2026-11-05）**：Day 1–8 已完成；Day 9 材料已就绪，待口述与力扣打卡。
 
 Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富文本编辑、DeepSeek Agent 自主增删改查笔记。
 本仓库 **不是** Lotion 的分支或复制品，而是我把它的关键机制拆成「一天一块」、亲手复刻的靶场。
@@ -20,7 +21,7 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 - **依据一**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
 - **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
 - **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
-- **时间轴**：Day 8 = 2026-10-29 → Day 48 = 2026-12-03（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
+- **时间轴**：Day 1–8 已完成；Day 9 材料于 2026-11-05 就绪，后续按学习计划推进（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
 - **难度校准**：Day 4–7 已按 8 份面经重新筛选，超纲的 tick 推演、curry 实现、bind polyfill、Prompt 大专题已移出必做；依据见 docs/00-Day4-7-面经校准.md。
 - **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
 
@@ -36,10 +37,11 @@ Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富�
 | Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | ✅ |
 | Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ MCP 深入与 Skills（B2）+ 清 C 轨欠账 | ✅ |
 | Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ Agent Loop 与安全闸门（B2）+ 最长子串 / 接雨水（C） | ✅ |
+| Day 9 | 缓存失效 / `fresh` / `prefetch`（A）+ Map 与 WeakMap（B1）+ 记忆与 RAG（B2）+ 两道题解（C） | 🟡 材料就绪，待口述 / 打卡 |
 
 手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
 已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-**C 轨进度**：Day 5–8 的 6 道 Hot 100 已按题单完成力扣打卡；仓库内对应 `src/interview/*.ts` 仍保留 TODO 作为本地复写靶子，红测不代表学习未完成。下一阶段从 Day 9 的「找到字符串中所有字母异位词 + 和为 K 的子数组」继续。
+**C 轨进度**：Day 5–8 的 6 道 Hot 100 已按题单完成力扣打卡；Day 9 的「找到字符串中所有字母异位词 + 和为 K 的子数组」题解和本地 TODO 靶子已就绪，待力扣首刷。仓库内对应 `src/interview/*.ts` 仍保留 TODO 作为本地复写靶子，红测不代表学习未完成。
 
 ## Day 1 —— 扁平数组还原成文档树
 
@@ -172,7 +174,7 @@ MyLotion-main/
 │   ├── data/
 │   │   ├── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
 │   │   ├── sidebar.ts              # Day 7 · A 轨：getSidebarTree / getChildren / createSidebarIndex（10 用例 ✅）
-│   │   └── document-cache.ts       # Day 8 · A 轨：并发去重 + LRU 200（13 用例 ✅）
+│   │   └── document-cache.ts       # Day 8-9 · A 轨：并发去重 + LRU + fresh / prefetch（18 用例 ✅）
 │   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
 │   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
 │   │   ├── two-sum.ts              # Day 5 · 力扣已打卡 / 本地待复写
@@ -180,7 +182,9 @@ MyLotion-main/
 │   │   ├── longest-consecutive.ts  # Day 6 · 力扣已打卡 / 本地待复写
 │   │   ├── move-zeroes.ts          # Day 6 · 力扣已打卡 / 本地待复写
 │   │   ├── longest-substring.ts    # Day 8 · 力扣已打卡 / 本地待复写
-│   │   └── trap-rain-water.ts      # Day 8 · 力扣已打卡 / 本地待复写
+│   │   ├── trap-rain-water.ts      # Day 8 · 力扣已打卡 / 本地待复写
+│   │   ├── find-anagrams.ts        # Day 9 · 力扣待打卡 / 本地 TODO
+│   │   └── subarray-sum.ts         # Day 9 · 力扣待打卡 / 本地 TODO
 │   └── test.js                     # 随手写的 JS 草稿
 ├── test/
 │   ├── tree.test.ts                # Day 1 · A
@@ -189,15 +193,17 @@ MyLotion-main/
 │   ├── data/
 │   │   ├── documents.test.ts       # Day 6 · A（12 用例 ✅）
 │   │   ├── sidebar.test.ts         # Day 7 · A（10 用例 ✅）
-│   │   └── document-cache.test.ts  # Day 8 · A（13 用例 ✅）
-│   └── interview/                  # Day 4~8 · C
+│   │   └── document-cache.test.ts  # Day 8-9 · A（18 用例 ✅）
+│   └── interview/                  # Day 4~9 · C
 │       ├── event-emitter.test.ts
 │       ├── two-sum.test.ts
 │       ├── group-anagrams.test.ts
 │       ├── longest-consecutive.test.ts
 │       ├── move-zeroes.test.ts
 │       ├── longest-substring.test.ts
-│       └── trap-rain-water.test.ts
+│       ├── trap-rain-water.test.ts
+│       ├── find-anagrams.test.ts
+│       └── subarray-sum.test.ts
 ├── docs/
 │   ├── 00-文件索引.md              # ★ 所有文件 × Day × 轨 的总表
 │   ├── 00-学习策略.md              # 为什么这么学（8 场面经 + 简历即考纲）
@@ -216,10 +222,13 @@ MyLotion-main/
 │   │   ├── day06-A-数据层.md
 │   │   ├── day07-A-全量拉取与懒加载.md
 │   │   ├── day08-A-请求去重与内存缓存.md
+│   │   ├── day09-A-缓存失效与预取.md
 │   │   ├── day06-C-最长连续序列.md
 │   │   ├── day06-C-移动零.md
 │   │   ├── day08-C-无重复字符的最长子串.md
 │   │   ├── day08-C-接雨水.md
+│   │   ├── day09-C-找到字符串中所有字母异位词.md
+│   │   ├── day09-C-和为K的子数组.md
 │   │   └── 术语人话版.md           # 全轨通用
 │   ├── 八股/                        # B1 / B2 题目 + 答案（同页）
 │   │   ├── day04-B1-事件循环.md
@@ -231,7 +240,9 @@ MyLotion-main/
 │   │   ├── day07-B1-this与call-apply-bind.md
 │   │   ├── day07-B2-MCP与Skills.md
 │   │   ├── day08-B1-原型链与继承.md
-│   │   └── day08-B2-Agent运行时.md
+│   │   ├── day08-B2-Agent运行时.md
+│   │   ├── day09-B1-Map-WeakMap与内存泄漏.md
+│   │   └── day09-B2-记忆与RAG基础.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt
@@ -240,7 +251,8 @@ MyLotion-main/
 │       ├── day05-全轨-日志.md
 │       ├── day06-全轨-日志.md
 │       ├── day07-全轨-日志.md
-│       └── day08-全轨-日志.md
+│       ├── day08-全轨-日志.md
+│       └── day09-全轨-日志.md
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.mts
@@ -268,7 +280,7 @@ pnpm test:watch
 npx vitest run test/interview/
 ```
 
-> 注：Day 1–8 的学习与力扣打卡已完成；C 轨 6 道题的本地源码仍是 TODO，保留作为复写练习，因此全量测试暂为红测。A、B1、B2 轨材料与 Day 8 缓存用例已就绪。
+> 注：Day 1–8 的学习与力扣打卡已完成；Day 9 的 A/B1/B2/C 材料和本地靶子已就绪，学习任务仍待完成。C 轨 8 道题的本地源码仍是 TODO，保留作为复写练习，因此全量测试暂为红测；Day 8-9 缓存用例 18/18 通过。
 
 ## 学习路线
 
@@ -280,7 +292,8 @@ npx vitest run test/interview/
 - [x] **Day 6** —— 数据层取数；B1 闭包；B2 Agent 词汇 + Tool Calling；C 最长连续序列 / 移动零
 - [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；B2 MCP 深入与 Skills；C 补打卡
 - [x] **Day 8** —— 请求去重 + LRU；B1 原型链与继承；B2 Agent Loop 与安全闸门；C 最长子串 / 接雨水
-- [ ] **Day 9-42** —— 逐块点亮（前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
+- [ ] **Day 9** —— 缓存失效 / `fresh` / `prefetch`；B1 Map / WeakMap / 内存泄漏；B2 记忆与 RAG；C 字母异位词 / 和为 K 的子数组（🟡 材料就绪）
+- [ ] **Day 10-42** —— 逐块点亮（前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
 - [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
 
 > 完整排期与每日任务见 `docs/00-学习计划.md`。
