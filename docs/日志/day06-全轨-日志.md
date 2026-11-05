@@ -8,8 +8,8 @@
 | 轨 | 内容 | 状态 |
 |----|------|------|
 | A · MyLotion | 读 `src/data/documents.ts` + `docs/讲稿/day06-A-数据层.md`，讲两个函数 | ✅ |
-| B1 · 前端八股 | `docs/八股/day06-B1-闭包-题目.md`（3 问 + 项目落地，20 分钟，校准版） | ✅ |
-| B2 · Agent 八股 | `docs/八股/day06-B2-Agent核心-题目.md`（Agent 词汇 / MCP / Tool Calling，20 分钟，校准版） | ✅ |
+| B1 · 前端八股 | `docs/八股/day06-B1-闭包.md`（题目 + 答案同页，3 问 + 项目落地，20 分钟，校准版） | ✅ |
+| B2 · Agent 八股 | `docs/八股/day06-B2-Agent核心.md`（题目 + 答案同页，Agent 词汇 / MCP / Tool Calling，20 分钟，校准版） | ✅ |
 | C · 力扣 | 两数之和 / 字母异位词分组 / 最长连续序列 / 移动零 | ✅ 力扣打卡完成（本地 TODO 待复写） |
 | C · 题解 | `docs/讲稿/day06-C-最长连续序列.md` / `day06-C-移动零.md`（写完再看） | ✅ |
 | ✱ 简历对齐 | 从 `docs/全轨-简历映射.md` 挑一条讲 2 分钟 | ⬜ |

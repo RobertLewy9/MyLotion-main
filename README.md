@@ -148,7 +148,7 @@ B站 / CSIG / 腾讯云智一面确实问，但实际深度是：**同步代码�
 - `async` 函数同步跑到第一个 `await`，后面的续体是微任务；
 - 一个微任务里新排的任务进队尾，要等本轮已排队的微任务跑完。
 
-题纸与答案见 `docs/八股/day04-B1-事件循环-题目.md` / `答案.md`。
+题目与答案见 `docs/八股/day04-B1-事件循环.md`（同页）。
 `process.nextTick` 与 Promise 的先后、thenable 多 tick、4ms 定时器饥饿、React 18 批处理不在本轮 8 场面经的追问范围里，已移出必做。
 
 ## 技术栈
@@ -221,17 +221,17 @@ MyLotion-main/
 │   │   ├── day08-C-无重复字符的最长子串.md
 │   │   ├── day08-C-接雨水.md
 │   │   └── 术语人话版.md           # 全轨通用
-│   ├── 八股/                        # B1 / B2 题纸与答案
-│   │   ├── day04-B1-事件循环-题目.md / 答案.md
-│   │   ├── day04-B2-Agent全景-题目.md / 答案.md
-│   │   ├── day05-B1-输出题与async形态-题目.md / 答案.md
-│   │   ├── day05-B2-LLM基础-题目.md / 答案.md
-│   │   ├── day06-B1-闭包-题目.md / 答案.md
-│   │   ├── day06-B2-Agent核心-题目.md / 答案.md
-│   │   ├── day07-B1-this与call-apply-bind-题目.md / 答案.md
-│   │   ├── day07-B2-MCP与Skills-题目.md / 答案.md
-│   │   ├── day08-B1-原型链与继承-题目.md / 答案.md
-│   │   └── day08-B2-Agent运行时-题目.md / 答案.md
+│   ├── 八股/                        # B1 / B2 题目 + 答案（同页）
+│   │   ├── day04-B1-事件循环.md
+│   │   ├── day04-B2-Agent全景.md
+│   │   ├── day05-B1-输出题与async形态.md
+│   │   ├── day05-B2-LLM基础.md
+│   │   ├── day06-B1-闭包.md
+│   │   ├── day06-B2-Agent核心.md
+│   │   ├── day07-B1-this与call-apply-bind.md
+│   │   ├── day07-B2-MCP与Skills.md
+│   │   ├── day08-B1-原型链与继承.md
+│   │   └── day08-B2-Agent运行时.md
 │   ├── 速记/
 │   │   ├── day05-A-速记.md
 │   │   └── day05-A-速记-qq版.txt

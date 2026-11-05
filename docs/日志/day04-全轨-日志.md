@@ -11,8 +11,8 @@
 | 轨 | 做了什么 | 产出物 | 状态 |
 |----|----------|--------|------|
 | A · MyLotion | 认地图：读 `docs/A-架构总览.md`，写讲稿 v1（三层结构 + 8 步主链路），自己补了 3 个问答 | `docs/讲稿/day04-A-架构通读.md` | ✅ |
-| B1 · 前端八股 | 事件循环：宏 / 微任务 + Promise 时机。旧版题纸 22 题（概念 7 / 输出 12 / 场景 3）+ 追问 4；输出题首刷 **7/12** | `docs/八股/day04-B1-事件循环-题目.md`、`day04-B1-事件循环-答案.md` | ✅ 首刷 |
-| B2 · Agent 八股 | Agent 全景：LLM / Prompt / Context / Tool / Function Calling / MCP / Skill / Agent 的分层，以及 Workflow vs Agent | `docs/八股/day04-B2-Agent全景-题目.md`、`day04-B2-Agent全景-答案.md` | ✅ |
+| B1 · 前端八股 | 事件循环：宏 / 微任务 + Promise 时机。旧版题纸 22 题（概念 7 / 输出 12 / 场景 3）+ 追问 4；输出题首刷 **7/12** | `docs/八股/day04-B1-事件循环.md`（题目 + 答案） | ✅ 首刷 |
+| B2 · Agent 八股 | Agent 全景：LLM / Prompt / Context / Tool / Function Calling / MCP / Skill / Agent 的分层，以及 Workflow vs Agent | `docs/八股/day04-B2-Agent全景.md`（题目 + 答案） | ✅ |
 | C · 手撕 | 01 `EventEmitter`（on / once / off / emit），12 用例全绿 | `src/interview/event-emitter.ts`、`docs/讲稿/day04-C-手撕01-EventEmitter.md` | ✅ |
 
 ## 今天真正学到的
