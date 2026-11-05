@@ -1,5 +1,5 @@
 /**
- * Day 8 · 文档详情缓存：并发请求去重 + LRU 上限
+ * Day 8-9 · 文档详情缓存：并发去重 + LRU + fresh / prefetch
  *
  * 对应 Lotion：`getById()` 被详情页、AI 工具、订阅回调同时调用时，
  * 同一个文档在短时间内可能触发多次网络请求。这里做两件事：
@@ -11,6 +11,11 @@
  */
 
 type Fetcher<T> = (id: string) => T | Promise<T>;
+
+type GetOptions = {
+  /** 跳过已完成缓存，重新加载一次；同一 id 的在途请求仍会合并。 */
+  fresh?: boolean;
+};
 
 export class DocumentCache<T> {
   private readonly capacity: number;
@@ -41,32 +46,36 @@ export class DocumentCache<T> {
    *   pending 请求 -> 已完成缓存 -> 调 fetcher 加载
    * 命中缓存时会把该条移到 Map 尾部，表示“最近使用”。
    */
-  get(id: string, fetcher: Fetcher<T>): Promise<T> {
+  get(id: string, fetcher: Fetcher<T>, options: GetOptions = {}): Promise<T> {
     const inFlight = this.pending.get(id);
     if (inFlight) return inFlight;
 
-    if (this.values.has(id)) {
+    if (!options.fresh && this.values.has(id)) {
       const value = this.values.get(id) as T;
       this.touch(id, value);
       return Promise.resolve(value);
     }
 
     const request = Promise.resolve().then(() => fetcher(id));
-    this.pending.set(id, request);
-
-    request.then(
-      (value) => {
+    let tracked!: Promise<T>;
+    tracked = request
+      .then((value) => {
         // invalidate/clear 可能已经移除了这条请求，旧响应不能回填缓存。
-        if (this.pending.get(id) === request) this.remember(id, value);
-      },
-      () => {
-        // 失败结果不缓存；清理由下面的 finally 统一做。
-      },
-    ).finally(() => {
-      if (this.pending.get(id) === request) this.pending.delete(id);
-    });
+        if (this.pending.get(id) === tracked) this.remember(id, value);
+        return value;
+      })
+      .finally(() => {
+        // 等调用方拿到结果时，pending 已经清理完毕，下一次 fresh 不会误复用旧请求。
+        if (this.pending.get(id) === tracked) this.pending.delete(id);
+      });
 
-    return request;
+    this.pending.set(id, tracked);
+    return tracked;
+  }
+
+  /** 后台预热；失败不缓存、不抛给调用方，下一次 get 仍可重试。 */
+  prefetch(id: string, fetcher: Fetcher<T>): void {
+    void this.get(id, fetcher).catch(() => undefined);
   }
 
   /** 数据变更后调用：下一次 get 必须重新加载。 */

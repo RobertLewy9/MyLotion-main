@@ -11,6 +11,12 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+async function drainMicrotasks(times = 5): Promise<void> {
+  for (let i = 0; i < times; i++) {
+    await Promise.resolve();
+  }
+}
+
 describe("DocumentCache —— 并发去重", () => {
   it("同一 id 的并发请求共用一个 Promise，只加载一次", async () => {
     const cache = new DocumentCache<string>();
@@ -219,5 +225,129 @@ describe("DocumentCache —— LRU 上限", () => {
     expect(() => new DocumentCache(-1)).toThrow(RangeError);
     expect(() => new DocumentCache(1.5)).toThrow(RangeError);
     expect(() => new DocumentCache(Number.NaN)).toThrow(RangeError);
+  });
+});
+
+describe("DocumentCache —— fresh 与 prefetch", () => {
+  it("fresh 绕过已完成缓存，并用新结果覆盖旧值", async () => {
+    const cache = new DocumentCache<string>();
+    let calls = 0;
+
+    await expect(
+      cache.get("doc-1", async () => {
+        calls++;
+        return "v1";
+      }),
+    ).resolves.toBe("v1");
+
+    await expect(
+      cache.get(
+        "doc-1",
+        async () => {
+          calls++;
+          return "v2";
+        },
+        { fresh: true },
+      ),
+    ).resolves.toBe("v2");
+
+    await expect(
+      cache.get("doc-1", async () => {
+        calls++;
+        return "unexpected";
+      }),
+    ).resolves.toBe("v2");
+    expect(calls).toBe(2);
+  });
+
+  it("多个 fresh 请求命中同一在途请求时仍然只加载一次", async () => {
+    const cache = new DocumentCache<string>();
+    await cache.get("doc-1", async () => "old");
+
+    const gate = deferred<string>();
+    let calls = 0;
+    const first = cache.get(
+      "doc-1",
+      () => {
+        calls++;
+        return gate.promise;
+      },
+      { fresh: true },
+    );
+    const second = cache.get(
+      "doc-1",
+      () => {
+        calls++;
+        return "unexpected";
+      },
+      { fresh: true },
+    );
+
+    expect(second).toBe(first);
+    gate.resolve("new");
+    await expect(first).resolves.toBe("new");
+    expect(calls).toBe(1);
+    expect(cache.has("doc-1")).toBe(true);
+  });
+
+  it("prefetch 预热缓存，后续 get 不再加载", async () => {
+    const cache = new DocumentCache<string>();
+    let calls = 0;
+
+    cache.prefetch("doc-1", async () => {
+      calls++;
+      return "prefetched";
+    });
+
+    await expect(
+      cache.get("doc-1", async () => {
+        calls++;
+        return "unexpected";
+      }),
+    ).resolves.toBe("prefetched");
+    expect(calls).toBe(1);
+  });
+
+  it("prefetch 失败不会缓存，也不会阻止下一次重试", async () => {
+    const cache = new DocumentCache<string>();
+    let calls = 0;
+
+    cache.prefetch("doc-1", async () => {
+      calls++;
+      throw new Error("network");
+    });
+    await drainMicrotasks();
+
+    expect(cache.has("doc-1")).toBe(false);
+    await expect(
+      cache.get("doc-1", async () => {
+        calls++;
+        return "retry";
+      }),
+    ).resolves.toBe("retry");
+    expect(calls).toBe(2);
+  });
+
+  it("已缓存时 prefetch 不会重复加载", async () => {
+    const cache = new DocumentCache<string>();
+    let calls = 0;
+
+    await expect(
+      cache.get("doc-1", async () => {
+        calls++;
+        return "cached";
+      }),
+    ).resolves.toBe("cached");
+
+    cache.prefetch("doc-1", async () => {
+      calls++;
+      return "unexpected";
+    });
+    await Promise.resolve();
+
+    await expect(cache.get("doc-1", async () => "unexpected")).resolves.toBe(
+      "cached",
+    );
+    expect(calls).toBe(1);
   });
 });
