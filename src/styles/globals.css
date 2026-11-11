@@ -1,0 +1,511 @@
+/* Lotion 设计系统 —— Apple / macOS 语言
+   ------------------------------------------------------------------
+   原则：
+   1. 内容优先：chrome（侧边栏、工具栏、浮层）让位于正文本身；
+   2. 层级靠材质与留白，而不是重边框与色块；
+   3. 颜色取自 macOS 系统色板（systemBlue / systemYellow / label / separator），
+      深浅色各自独立取值，不是简单反转；
+   4. 圆角连续、阴影柔和多层、动效短促有物理感（Apple 的 cubic-bezier(0.32,0.72,0,1)）。 */
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* 单一字族：macOS 系统字体（SF Pro）；非 Apple 平台回退 Geist（同为瑞士风无衬线） */
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --font-display: var(--font-ui);
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
+  --color-ai-muted: var(--ai-muted);
+  /* Apple Intelligence 多色渐变的四个色标（AI 身份签名，见 .ai-orb） */
+  --color-ai-grad-1: var(--ai-grad-1);
+  --color-ai-grad-2: var(--ai-grad-2);
+  --color-ai-grad-3: var(--ai-grad-3);
+  --color-ai-grad-4: var(--ai-grad-4);
+  --color-hl: var(--hl);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-night: var(--night);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  /* 三栏 shell 语义色 */
+  --color-shell-sidebar: var(--shell-sidebar);
+  --color-shell-label-primary: var(--shell-label-primary);
+  --color-shell-label-secondary: var(--shell-label-secondary);
+  --color-shell-label-tertiary: var(--shell-label-tertiary);
+  --color-shell-label-caption: var(--shell-label-caption);
+  --color-shell-row-hover: var(--shell-row-hover);
+  --color-shell-row-active: var(--shell-row-active);
+  --color-shell-row-active-accent: var(--shell-row-active-accent);
+  --color-shell-accent: var(--shell-accent);
+  --color-shell-accent-strong: var(--shell-accent-strong);
+  --color-shell-bg-base: var(--shell-bg-base);
+  --color-shell-border: var(--shell-border);
+  --color-shell-border-l2: var(--shell-border-l2);
+  --color-shell-scrollbar: var(--shell-scrollbar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  /* 状态语义色：补上 macOS 的 systemOrange / systemGreen
+     （此前组件里直接写 Tailwind 的 amber-500，那个颜色根本不在系统色板里） */
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* 连续圆角：Apple 的小控件 6–8px、卡片 10px、面板 14px、弹窗 20px */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+  --shadow-apple-sm: var(--shadow-sm);
+  --shadow-apple-md: var(--shadow-md);
+  --shadow-apple-lg: var(--shadow-lg);
+}
+
+:root {
+  /* ---- 字族 ---- */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Geist Sans",
+    "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --font-code: "SF Mono", ui-monospace, "Geist Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius: 10px;
+
+  /* ---- 系统色 · Light（macOS） ---- */
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #007aff; /* systemBlue */
+  --primary-foreground: #ffffff;
+  --secondary: rgba(120, 120, 128, 0.12);
+  --secondary-foreground: #1d1d1f;
+  --muted: rgba(120, 120, 128, 0.08);
+  --muted-foreground: rgba(60, 60, 67, 0.6); /* secondaryLabel */
+  --accent: rgba(120, 120, 128, 0.12);
+  --accent-foreground: #1d1d1f;
+  --destructive: #ff3b30; /* systemRed */
+  --warning: #ff9500; /* systemOrange */
+  --warning-foreground: #ffffff;
+  --success: #34c759; /* systemGreen */
+  --success-foreground: #ffffff;
+  --border: rgba(60, 60, 67, 0.12); /* separator（非实心） */
+  --input: rgba(60, 60, 67, 0.16);
+  --ring: rgba(0, 122, 255, 0.45);
+
+  /* ---- 品牌色 ---- */
+  --ink: #1d1d1f;
+  --paper: #ffffff;
+  --night: #1e1e1e;
+  --hl: #ffe680; /* Apple Notes 荧光笔 */
+  --ai: #ffd60a; /* systemYellow */
+  --ai-foreground: #1d1d1f;
+  --ai-muted: rgba(255, 214, 10, 0.16);
+  /* Apple Intelligence 渐变四色标：粉 → 橙 → 紫 → 蓝（AI 身份签名） */
+  --ai-grad-1: #ff6482;
+  --ai-grad-2: #ff9f0a;
+  --ai-grad-3: #bf5af2;
+  --ai-grad-4: #0a84ff;
+
+  /* ---- 三栏 shell（Light） ---- */
+  --shell-sidebar: rgba(242, 242, 247, 0.9); /* 半透明材质，配合 backdrop-blur */
+  --shell-label-primary: #1d1d1f;
+  --shell-label-secondary: rgba(60, 60, 67, 0.6);
+  --shell-label-tertiary: rgba(60, 60, 67, 0.36);
+  --shell-label-caption: rgba(60, 60, 67, 0.24);
+  --shell-row-hover: rgba(0, 0, 0, 0.045);
+  --shell-row-active: rgba(0, 0, 0, 0.075);
+  --shell-row-active-accent: rgba(0, 122, 255, 0.12);
+  --shell-accent: #007aff;
+  --shell-accent-strong: #0a84ff;
+  --shell-bg-base: #ffffff;
+  --shell-border: rgba(60, 60, 67, 0.1);
+  --shell-border-l2: rgba(60, 60, 67, 0.16);
+  --shell-scrollbar: rgba(0, 0, 0, 0.22);
+
+  --sidebar: rgba(242, 242, 247, 0.9);
+  --sidebar-foreground: #1d1d1f;
+  --sidebar-primary: #007aff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(0, 0, 0, 0.06);
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: rgba(60, 60, 67, 0.1);
+  --sidebar-ring: rgba(0, 122, 255, 0.45);
+
+  /* 网格纸纹理（保留类名，Apple 语言下退化为极淡的纸面质感） */
+  --grid-line: rgba(0, 0, 0, 0.018);
+  --grid-line-strong: rgba(0, 0, 0, 0.03);
+
+  /* ---- 柔和多层阴影 ---- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.07), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+
+  /* ---- 动效：Apple 的减速曲线 ---- */
+  --ds-ease-in-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --ds-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ds-transition-duration-slow: 0.28s;
+
+  --chart-1: #007aff;
+  --chart-2: #34c759;
+  --chart-3: #ff9500;
+  --chart-4: #af52de;
+  --chart-5: #ff3b30;
+}
+
+.dark {
+  /* ---- 系统色 · Dark（macOS：窗口 #1e1e1e / 抬升面 #2c2c2e） ---- */
+  --background: #1e1e1e;
+  --foreground: #ffffff;
+  --card: #2c2c2e;
+  --card-foreground: #ffffff;
+  --popover: #2c2c2e;
+  --popover-foreground: #ffffff;
+  --primary: #0a84ff;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(120, 120, 128, 0.32);
+  --secondary-foreground: #ffffff;
+  --muted: rgba(120, 120, 128, 0.24);
+  --muted-foreground: rgba(235, 235, 245, 0.6);
+  --accent: rgba(120, 120, 128, 0.32);
+  --accent-foreground: #ffffff;
+  --destructive: #ff453a;
+  --warning: #ff9f0a; /* systemOrange (dark) */
+  --warning-foreground: #ffffff;
+  --success: #30d158; /* systemGreen (dark) */
+  --success-foreground: #ffffff;
+  --border: rgba(84, 84, 88, 0.65);
+  --input: rgba(120, 120, 128, 0.4);
+  --ring: rgba(10, 132, 255, 0.6);
+
+  --ink: #ffffff;
+  --paper: #1e1e1e;
+  --night: #1e1e1e;
+  --hl: rgba(255, 214, 10, 0.34);
+  --ai: #ffd60a;
+  --ai-foreground: #1d1d1f;
+  --ai-muted: rgba(255, 214, 10, 0.18);
+  /* 渐变在深色底上略微提亮，保持同样的辨识度 */
+  --ai-grad-1: #ff7a92;
+  --ai-grad-2: #ffa726;
+  --ai-grad-3: #c96ef5;
+  --ai-grad-4: #2f95ff;
+
+  --shell-sidebar: rgba(44, 44, 46, 0.78);
+  --shell-label-primary: #ffffff;
+  --shell-label-secondary: rgba(235, 235, 245, 0.6);
+  --shell-label-tertiary: rgba(235, 235, 245, 0.36);
+  --shell-label-caption: rgba(235, 235, 245, 0.24);
+  --shell-row-hover: rgba(255, 255, 255, 0.06);
+  --shell-row-active: rgba(255, 255, 255, 0.1);
+  --shell-row-active-accent: rgba(10, 132, 255, 0.22);
+  --shell-accent: #0a84ff;
+  --shell-accent-strong: #409cff;
+  --shell-bg-base: #1e1e1e;
+  --shell-border: rgba(255, 255, 255, 0.08);
+  --shell-border-l2: rgba(255, 255, 255, 0.14);
+  --shell-scrollbar: rgba(255, 255, 255, 0.26);
+
+  --sidebar: rgba(44, 44, 46, 0.78);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #0a84ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: rgba(10, 132, 255, 0.6);
+
+  --grid-line: rgba(255, 255, 255, 0.012);
+  --grid-line-strong: rgba(255, 255, 255, 0.022);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+  --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+
+  --chart-1: #0a84ff;
+  --chart-2: #30d158;
+  --chart-3: #ff9f0a;
+  --chart-4: #bf5af2;
+  --chart-5: #ff453a;
+}
+
+/* full pages
+   ⚠️ #root 必须在高度链里：Vite SPA 的 React 树挂在 <div id="root"> 下
+   （Next.js 时代直接挂 <body>，故原本只需 html/body）。缺了它，所有 h-full
+   会退化成"内容高度"，三栏 shell 变成左右栏跟着文档高度走、无法独立滚动。 */
+html,
+body,
+#root,
+:root {
+  height: 100%
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    font-feature-settings: "cv11", "ss01";
+  }
+  /* Apple 的大标题用更紧的字距 */
+  h1, h2, h3 {
+    letter-spacing: -0.022em;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 26%, transparent);
+    color: inherit;
+  }
+}
+
+/* ---------------- 材质（vibrancy） ---------------- */
+
+/* 侧边栏 / 详情栏：半透明 + 背景模糊（macOS sidebar material） */
+.material-sidebar {
+  background: var(--shell-sidebar);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+}
+
+/* 工具栏 / 顶栏：内容滚动时从其下透出 */
+.material-toolbar {
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* 浮层（菜单、气泡、弹窗）：高不透明度材质，保证文字可读 */
+.material-popover {
+  background: color-mix(in srgb, var(--popover) 88%, transparent);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+}
+
+/* 卡片 / 分组容器 */
+.surface-card {
+  background: var(--card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 危险语义的卡片（永久删除确认）：与 .surface-card 同构，换成 systemRed 语汇。
+   必须在这里定义而不能在组件里覆盖 —— .surface-card 是无层级 CSS，
+   优先级高于 Tailwind 的 utilities 层，用 border-destructive/25 去覆盖不会生效。 */
+.surface-card-danger {
+  background: color-mix(in srgb, var(--destructive) 5%, var(--card));
+  border: 0.5px solid color-mix(in srgb, var(--destructive) 25%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 警告语义的卡片（doom loop 警告等）：同构，换成 systemOrange 语汇 */
+.surface-card-warning {
+  background: color-mix(in srgb, var(--warning) 6%, var(--card));
+  border: 0.5px solid color-mix(in srgb, var(--warning) 28%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------------- 动效 ---------------- */
+
+/* 文档行入场淡入 */
+@keyframes row-in {
+  from { opacity: 0; }
+}
+
+/* 工具卡片 running：柔和微光平移。
+   替换原先 300px 硬边色块"扫过"的写法——那个渐变的两个端点有可见边界，
+   看起来像进度条在跑，而不是 macOS 的呼吸感。 */
+@keyframes ai-sheen {
+  0% { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+
+.ai-running-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 9%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 55% 100%;
+  background-repeat: no-repeat;
+  animation: ai-sheen 2.2s var(--ds-ease-in-out) infinite;
+  pointer-events: none;
+}
+
+/* AI 运行中的呼吸（渐变 orb：思考指示、工具活动点） */
+@keyframes ai-breathe {
+  0%, 100% { opacity: 0.82; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+.ai-breathe {
+  animation: ai-breathe 2.4s var(--ds-ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-"],
+  .ai-breathe,
+  .ai-running-row::after {
+    animation: none !important;
+  }
+}
+
+/* ---------------- 滚动条：macOS overlay 风格 ---------------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--shell-scrollbar) transparent;
+}
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--shell-scrollbar);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--shell-scrollbar) 75%, var(--foreground));
+  background-clip: content-box;
+}
+
+/* ---------------- 签名元素 ---------------- */
+
+/* Apple Intelligence 渐变 orb：AI 的身份标识（头像 / 空状态 / 思考指示）。
+   四个径向色斑叠一层斜向渐变 → 柔和的彩色球体，而不是色轮式的硬边锥形渐变。 */
+.ai-orb {
+  color: #ffffff; /* orb 上的白色图标（渐变底不跟主题走，见 .ai-orb 的色标定义） */
+  line-height: 1;
+  background-image:
+    radial-gradient(120% 120% at 18% 12%, var(--ai-grad-1) 0%, transparent 58%),
+    radial-gradient(130% 130% at 88% 20%, var(--ai-grad-2) 0%, transparent 62%),
+    radial-gradient(140% 140% at 72% 92%, var(--ai-grad-3) 0%, transparent 62%),
+    radial-gradient(120% 120% at 18% 84%, var(--ai-grad-4) 0%, transparent 60%),
+    linear-gradient(135deg, var(--ai-grad-3), var(--ai-grad-4));
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.4),
+    var(--shadow-sm);
+}
+
+/* 纸面质感（原网格纸）：Apple 语言下退化为几乎不可见的柔光，仅用于空状态等少量场景 */
+.graph-paper {
+  background-image:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--primary) 5%, transparent) 0%, transparent 60%),
+    linear-gradient(to right, var(--grid-line-strong) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-strong) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+}
+
+/* 荧光笔高亮（AI 划重点）：Apple Notes 的黄色马克笔 */
+.hl-mark {
+  background: linear-gradient(
+    104deg,
+    transparent 0.9%,
+    var(--hl) 2.4%,
+    var(--hl) 97.6%,
+    transparent 99%
+  );
+  border-radius: 0.18em 0.3em 0.18em 0.3em;
+  padding: 0.04em 0.16em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* @提及胶囊输入框的 placeholder（contentEditable 无原生 placeholder） */
+.mention-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+/* 文档提及胶囊：Apple 的 token/chip 观感（填充色，无边框） */
+.mention-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  border: none;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--primary);
+  vertical-align: baseline;
+  white-space: nowrap;
+  max-width: 10rem;
+  margin-inline: 2px;
+}
+
+.mention-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-chip.cursor-pointer:hover {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+/* 用户气泡（systemBlue 实底）内的提及胶囊：必须反色，
+   否则 .mention-chip 的"蓝底蓝字"落在蓝气泡上等于隐形。 */
+.mention-chip-on-accent {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.mention-chip-on-accent.cursor-pointer:hover {
+  background: rgba(255, 255, 255, 0.34);
+}

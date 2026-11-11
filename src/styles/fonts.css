@@ -1,0 +1,10 @@
+/* 字体：@fontsource 自托管（离线可用，无外部 CDN 依赖）。
+   Apple 平台优先使用系统 SF Pro（见 globals.css 的 --font-ui）；
+   这里只提供非 Apple 平台（Windows/Linux）的回退字族 Geist —— 与 SF 同为瑞士风无衬线，
+   保证跨平台观感一致。Fraunces（衬线展示体）已随 Apple 风格重构移除。 */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";

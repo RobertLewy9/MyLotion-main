@@ -1,0 +1,243 @@
+// 宿主内核装配（组合根）：把 settings / docStore 等提供方插件挂到一棵内核上下文上。
+//
+// 这是"插件化"从抽象落到产品的那一步：
+//   server/index.ts → bootHostKernel() → { ctx, settings } → 各路由 requireDocStore(ctx) 取服务
+//
+// 三条纪律（对齐 docs/插件化架构.md §2）：
+//   1. 启动即审计：PENDING（缺依赖，插件不工作）与 FAILED 必须打印出来，
+//      否则 inject 门控失败就是静默的（DSH 的教训）。
+//   2. 配置从 settings 读，不再散落 process.env（env 仍是最高优先级来源）。
+//   3. 依赖可注入（db / settingsPath）：测试不碰真实 data/lotion.db。
+import type Database from "better-sqlite3";
+import path from "node:path";
+import {
+  Context,
+  applyPatches,
+  audit as auditOf,
+  auditOk,
+  createRootContext,
+  formatAudit,
+  formatLoadReport,
+  loadPlugins,
+  readService,
+  settleAll,
+  type AuditReport,
+  type LoadReport,
+  type PluginEntry,
+} from "@/lib/kernel";
+import { logger } from "@/lib/logger";
+import {
+  installLotionSettings,
+  provideLotionSettings,
+  type LotionSettings,
+} from "@/lib/local/lotion-config";
+import { createHttpRouteRegistry, provideHttpRoutes } from "@/lib/seams/http-routes";
+import { hostComposition, toPluginPatches } from "./composition";
+import { apiRoutePlugins, type ApiRouteRegistry } from "./routes";
+import { requireDocStore, type DocStore } from "@/lib/seams/doc-store";
+import { TOOLS_SERVICE } from "@/lib/seams/tools";
+import type { HostToolRegistry } from "@/lib/ai/tools/registry";
+import { findSettings } from "@/lib/seams/settings";
+import {
+  createFilePluginPackageStore,
+  provideInstalledStore,
+} from "@/lib/local/plugin-package";
+import {
+  createInstalledPluginRuntime,
+  provideInstalledRuntime,
+} from "@/lib/local/plugin-runtime";
+import { resolvePluginsDir } from "@/lib/local/dynamic-store";
+import {
+  createStaticPluginController,
+  provideStaticPluginController,
+} from "@/lib/local/static-plugin-controller";
+
+export interface HostKernel {
+  /** 根上下文（路由/工具从这里取服务） */
+  ctx: Context;
+  /** HTTP 路由注册表（server/app.ts 用它装配 /api/*） */
+  httpRoutes: ApiRouteRegistry;
+  /** 组合清单装配报告（稳定 id → fiber） */
+  load: LoadReport;
+  /** 配置命名空间句柄（ai / storage / server / logging） */
+  settings: LotionSettings;
+  /** 启动审计报告 */
+  audit: AuditReport;
+  /** 装配 + 审计的可读文本（启动日志一次打印） */
+  startupText: string;
+  /** 审计报告的可读文本（启动日志用） */
+  auditText: string;
+  /** 拆卸整棵内核（测试与优雅停机用） */
+  dispose: () => Promise<void>;
+}
+
+export interface BootHostKernelOptions {
+  /** 注入 SQLite 连接（测试传 :memory:）；省略时用进程单例（getDb） */
+  db?: Database.Database;
+  /** 注入用户层配置文件路径（测试传临时文件）；省略时用 resolveSettingsPath() */
+  settingsPath?: string;
+  /** 插件数据根目录（测试传临时目录）；省略用 data/plugins */
+  pluginsDir?: string;
+}
+
+let current: HostKernel | null = null;
+
+/**
+ * 装配宿主内核（幂等：重复调用返回同一实例）。
+ * 注意：调用前应已加载 .env（server/load-env.ts），因为 settings 的环境变量层在装配时读取。
+ */
+/**
+ * 装配宿主内核（幂等）。**async**：Cordis 的插件激活是异步的，装配必须 settle 完才算就绪。
+ */
+export async function bootHostKernel(options: BootHostKernelOptions = {}): Promise<HostKernel> {
+  if (current) return current;
+
+  const ctx = createRootContext();
+
+  // 第 0 阶段：HTTP 路由注册表（路由插件的贡献点；owner 记为当前 fiber 名便于审计）
+  const httpRoutes = createHttpRouteRegistry<import("./routes").ApiSubApp>(
+    () => ctx.fiber.name,
+  );
+  const runtimeEntries: PluginEntry[] = [
+    {
+      id: "http-routes",
+      plugin: {
+        name: "http-routes",
+        apply: (c: Context) => provideHttpRoutes(c, httpRoutes),
+      },
+    },
+  ];
+
+  // 第 1 阶段：先挂 settings 提供方（配置层是所有后续装配的输入）
+  const composition = hostComposition({
+    settingsPath: options.settingsPath,
+    db: options.db,
+    pluginsDir: options.pluginsDir,
+  });
+  const settingsEntries = composition.filter((entry) => entry.id === "settings-file");
+  const restEntries = [
+    ...composition.filter((entry) => entry.id !== "settings-file"),
+    ...apiRoutePlugins(),
+  ];
+  const loadSettings = await loadPlugins(ctx, [...runtimeEntries, ...settingsEntries]);
+
+  // 第 2 阶段：读用户层 patch（data/settings.json 的 `plugins` 命名空间），再装其余条目
+  const settings = installLotionSettings(ctx);
+  // 插件管理器等后续条目需要同一份配置句柄（不能重复 register）。
+  provideLotionSettings(ctx, settings);
+  // ⚠️ Cordis 的 inject 门控在下一个微任务才激活：不 settle 就读不到配置层，
+  // 用户层 patch（data/settings.json 的 plugins）会被**静默忽略**。
+  await settleAll(ctx);
+  const { entries: patchedEntries, unknownPatchIds } = applyPatches(
+    restEntries,
+    toPluginPatches(settings.plugins.get()),
+  );
+  const loadRest = await loadPlugins(ctx, patchedEntries);
+
+  // 静态插件热切换：共享 loader 的 fiber 表；路由分发是实时查表，因此启停立即生效
+  const staticController = createStaticPluginController({
+    ctx,
+    entries: patchedEntries,
+    fibers: loadRest.fibers,
+  });
+  provideStaticPluginController(ctx, staticController);
+
+  // 已安装的第三方插件：在 createApp 之前挂载宿主半边，
+  // 这样它们贡献的 httpRoutes 才会进入注册表（之后启停路由类插件需重启）。
+  const installedRoot = options.pluginsDir ? path.resolve(options.pluginsDir) : resolvePluginsDir();
+  const installedStore = createFilePluginPackageStore(path.join(installedRoot, "installed"));
+  const installedRuntime = createInstalledPluginRuntime({ ctx, store: installedStore });
+  await installedRuntime.startAll();
+  provideInstalledStore(ctx, installedStore);
+  provideInstalledRuntime(ctx, installedRuntime);
+
+  // 合并两份报告：settings 条目的 fiber 也要能被统一卸载/审计
+  const load: LoadReport = {
+    mounted: [...loadSettings.mounted, ...loadRest.mounted],
+    skipped: [...loadSettings.skipped, ...loadRest.skipped],
+    failed: [...loadSettings.failed, ...loadRest.failed],
+    unknownPatchIds,
+    fibers: new Map([...loadSettings.fibers, ...loadRest.fibers]),
+    dispose: async () => {
+      await loadRest.dispose();
+      await loadSettings.dispose();
+    },
+  };
+
+  const report = auditOf(ctx);
+  const auditText = formatAudit(report);
+
+  if (!auditOk(report)) {
+    // 不阻断启动（缺服务可能是可选的），但必须让人看见
+    logger.api.warn("[kernel] 装配审计未通过", {
+      pending: report.pending,
+      failed: report.failed,
+    });
+  }
+
+  const kernel: HostKernel = {
+    ctx,
+    httpRoutes,
+    load,
+    settings,
+    audit: report,
+    auditText,
+    startupText: `${formatLoadReport(load)}\n${auditText}`,
+    async dispose() {
+      // 先卸已安装插件的宿主半边，再卸整棵内核
+      await installedRuntime.dispose();
+      // 卸载本内核挂载的全部条目（Cordis 的根 fiber 常驻，不需要也不能整体 dispose）
+      await load.dispose();
+      current = null;
+    },
+  };
+  current = kernel;
+  return kernel;
+}
+
+/** 取宿主内核；未装配即抛错（**不隐式装配**：避免测试/脚本意外碰到真实 data/lotion.db） */
+export function getHostKernel(): HostKernel {
+  if (!current) {
+    throw new Error("宿主内核未装配：请在入口调用 bootHostKernel()（server/index.ts 已调用）");
+  }
+  return current;
+}
+
+/** 取宿主内核；未装配返回 null（可选消费者 / 测试环境降级用：回退到环境变量） */
+export function getHostKernelIfBooted(): HostKernel | null {
+  return current;
+}
+
+/** 便捷取用：工具注册表（内置工具 + 插件注册的工具） */
+export function getHostTools(): HostToolRegistry {
+  const registry = readService<HostToolRegistry>(getHostKernel().ctx, TOOLS_SERVICE);
+  if (!registry) {
+    throw new Error(`tools 未装配：请确认组合清单里挂载了 tools-registry 条目（服务 key「${TOOLS_SERVICE}」）`);
+  }
+  return registry;
+}
+
+/** 便捷取用：宿主侧完整 docStore 契约 */
+export function getHostDocStore(): DocStore {
+  return requireDocStore(getHostKernel().ctx);
+}
+
+/** 便捷取用：AI 运行期配置（内核未装配时返回 undefined → 由消费方回退环境变量） */
+export function getHostAiConfig(): { model: string; apiKey: string } | undefined {
+  return current?.settings.ai.get();
+}
+
+/** 是否已装配（诊断用） */
+export function isHostKernelBooted(): boolean {
+  return current !== null;
+}
+
+/** 已装配的 settings 提供方（未挂载时 undefined） */
+export function getHostSettingsProvider() {
+  return current ? findSettings(current.ctx) : undefined;
+}
+
+/** 测试用：清空单例 */
+export function _resetHostKernelForTest(): void {
+  current = null;
+}

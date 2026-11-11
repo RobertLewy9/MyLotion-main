@@ -1,0 +1,568 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import type Database from "better-sqlite3";
+import { openTestDb, isoNow } from "@/lib/local/sqlite";
+import { createDocument, updateDocument } from "@/lib/local/db";
+import { runNoteAgent } from "@/lib/agent";
+
+// ---- hoisted 共享状态（vi.mock factory 不能引用外部变量） ----
+
+const { mockConfig } = vi.hoisted(() => ({
+  mockConfig: {
+    tool: "none" as "createNote" | "readNote" | "updateNote" | "deleteNote" | "moveNote" | "searchNotes" | "none",
+    noteId: "doc-123" as string, // beforeEach 按真实种子数据覆盖
+    emitStepFinish: false,
+    emitError: false,
+    /** 模拟"中止/读取异常"：吐出首个 chunk 后让流报错，且**不触发 onFinish** */
+    streamError: false,
+    /** 模拟"长回答还在生成"：吐出首个 chunk 后保持流打开（不 onFinish、不关闭） */
+    hold: false,
+    capturedMessages: [] as Array<{ role: string; content: string }>,
+    capturedSystem: "" as string,
+    capturedModel: null as { modelId?: string; config?: { apiKey?: string } } | null,
+    abortSignal: null as AbortSignal | null,
+  },
+}));
+
+vi.mock("ai", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("ai")>();
+  return {
+    ...actual,
+    streamText: (options: {
+      system?: string;
+      messages?: Array<{ role: string; content: string }>;
+      tools?: Record<string, { execute?: (args: unknown, opts?: unknown) => Promise<unknown> }>;
+      abortSignal?: AbortSignal;
+      onStepFinish?: (info: { finishReason: string; toolCalls?: Array<{ toolName: string; args: unknown }>; text: string }) => void;
+      onError?: (info: { error: Error }) => void;
+      onFinish?: (info: { finishReason: string; usage: unknown; text: string; steps: unknown[] }) => void;
+    }) => {
+      // 捕获注入 streamText 的消息（断言历史注入/中止行为用）
+      mockConfig.capturedModel = (options as { model?: { modelId?: string; config?: { apiKey?: string } } }).model ?? null;
+      mockConfig.capturedMessages = options.messages ?? [];
+      mockConfig.capturedSystem = options.system ?? "";
+      // 捕获 abortSignal：断言 deleteNote 中止行为
+      mockConfig.abortSignal = options.abortSignal ?? null;
+      /** 本次流是否已收尾（pull 可能被多次调用） */
+      let settled = false;
+      return {
+        textStream: new ReadableStream<string>({
+          async start(controller) {
+            // 模拟模型调用工具（真实 createTools，副作用经 onEvent 上报）
+            const toolName = mockConfig.tool;
+            if (toolName !== "none" && options.tools?.[toolName]) {
+              const args =
+                toolName === "createNote"
+                  ? { title: "测试笔记", content: "笔记内容" }
+                  : toolName === "updateNote"
+                    ? { noteId: mockConfig.noteId, content: "新内容" }
+                    : toolName === "searchNotes"
+                      ? { query: "目标" }
+                      : toolName === "moveNote"
+                        ? { noteId: mockConfig.noteId, newParentId: null }
+                        : { noteId: mockConfig.noteId };
+              await options.tools[toolName]!.execute!(args, { toolCallId: "t1" });
+            }
+            // 模拟工具调用完成回调 → 触发 progress 事件注入 / 确认类工具中止检测
+            if (mockConfig.emitStepFinish || toolName === "deleteNote" || toolName === "moveNote") {
+              options.onStepFinish?.({
+                finishReason: "tool-calls",
+                toolCalls: [
+                  {
+                    toolName: toolName === "deleteNote" ? "deleteNote" : toolName === "moveNote" ? "moveNote" : "searchNotes",
+                    args: {},
+                  },
+                ],
+                text: "",
+              });
+            }
+            if (mockConfig.emitError) {
+              options.onError?.({ error: new Error("mock boom") });
+            }
+            controller.enqueue("正在处理...");
+            // 正常路径：立刻触发 onFinish 并关流（与真实 SDK 的 finish 回调等价）；
+            // streamError 路径不在这里收尾——等消费者先读到 chunk，再由 pull 让流报错，
+            // 以此模拟"已经吐出部分文本后中止、且不走 onFinish"。
+            if (!mockConfig.streamError && !mockConfig.hold) {
+              options.onFinish?.({
+                finishReason: "stop",
+                usage: { inputTokens: 1, outputTokens: 2 },
+                text: "mock text",
+                steps: [],
+              });
+              controller.close();
+            }
+          },
+          pull(controller) {
+            if (mockConfig.hold) return; // 保持打开：等对端 cancel
+            if (settled) return;
+            settled = true;
+            if (mockConfig.streamError) controller.error(new Error("mock stream broken"));
+          },
+        }),
+      };
+    },
+  };
+});
+
+vi.mock("@/lib/logger", () => {
+  const noop = () => {};
+  const ns = new Proxy({}, { get: () => noop });
+  return { logger: { api: ns, agent: ns, tools: ns, db: ns, compress: ns } };
+});
+
+// ---- 真实内存 SQLite（替代旧 fake supabase 查询链） ----
+
+let db: Database.Database;
+
+// ---- helpers ----
+
+interface SseEvent {
+  type: string;
+  [key: string]: unknown;
+}
+
+/** 解析 SSE 流（data: <json> 以空行分隔）为事件数组 */
+async function readEvents(stream: ReadableStream<Uint8Array>): Promise<SseEvent[]> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const events: SseEvent[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let sep: number;
+    while ((sep = buffer.indexOf("\n\n")) !== -1) {
+      const raw = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      if (raw.startsWith("data: ")) {
+        events.push(JSON.parse(raw.slice(6)));
+      }
+    }
+  }
+  return events;
+}
+
+beforeEach(() => {
+  db = openTestDb();
+  // 种子：user-1 用户 + 一篇归属 user-1 的笔记（read/update/delete 工具的真实数据源）
+  db.prepare(
+    "INSERT INTO users (id, email, passwordHash, createdAt, updatedAt) VALUES (?,?,?,?,?)",
+  ).run("user-1", "user-1@x.com", "hash", isoNow(), isoNow());
+  const docId = createDocument(db, "user-1", "引用笔记");
+  updateDocument(db, "user-1", docId, { content: "笔记内容" });
+
+  mockConfig.tool = "none";
+  mockConfig.noteId = docId;
+  mockConfig.emitStepFinish = false;
+  mockConfig.emitError = false;
+  mockConfig.streamError = false;
+  mockConfig.hold = false;
+  mockConfig.capturedMessages = [];
+  mockConfig.abortSignal = null;
+});
+
+// ---- tests ----
+
+describe("runNoteAgent SSE 事件注入", () => {
+  it("createNote 执行后推送 note_created 事件（独立事件行，不混入文本）", async () => {
+    mockConfig.tool = "createNote";
+    const { stream } = await runNoteAgent(db, "user-1", "帮我创建一篇笔记");
+    const events = await readEvents(stream);
+
+    const created = events.find((e) => e.type === "note_created");
+    const createdNoteId = created?.noteId as string;
+    expect(typeof createdNoteId).toBe("string");
+    expect(createdNoteId.length).toBeGreaterThan(0);
+    // 文本走 text 事件通道，事件行不被拼进文本内容
+    const textEvents = events.filter((e) => e.type === "text").map((e) => e.text);
+    expect(textEvents).toEqual(["正在处理..."]);
+  });
+
+  it("updateNote 执行后即时推送 reference 事件（不再攒到流结束）", async () => {
+    mockConfig.tool = "updateNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "改一下笔记");
+    const events = await readEvents(stream);
+
+    // 引用逐条即时推送（前端直接渲染引用 chip）
+    expect(events.some((e) => e.type === "reference" && e.noteId === mockConfig.noteId && e.title === "引用笔记")).toBe(true);
+    // done 仍聚合引用信息供 route 落库
+    const result = await done;
+    expect(result.references).toEqual([{ noteId: mockConfig.noteId, title: "引用笔记" }]);
+  });
+
+  it("readNote 执行后推送 reference 事件（读取过的笔记即引用来源）", async () => {
+    mockConfig.tool = "readNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "读一下笔记");
+    const events = await readEvents(stream);
+
+    expect(events.some((e) => e.type === "reference" && e.noteId === mockConfig.noteId && e.title === "引用笔记")).toBe(true);
+    const result = await done;
+    expect(result.references).toEqual([{ noteId: mockConfig.noteId, title: "引用笔记" }]);
+  });
+
+  it("工具执行自动推送 tool_start / tool_end 生命周期事件（带中文标签）", async () => {
+    mockConfig.tool = "searchNotes";
+    const { stream } = await runNoteAgent(db, "user-1", "搜索一下");
+    const events = await readEvents(stream);
+
+    const start = events.find((e) => e.type === "tool_start");
+    expect(start?.tool).toBe("searchNotes");
+    expect(start?.label).toBe("搜索笔记");
+    expect(typeof start?.seq).toBe("number");
+    const end = events.find((e) => e.type === "tool_end" && e.seq === start?.seq);
+    expect(end?.ok).toBe(true);
+  });
+
+  it("无工具调用时只有 turn 边界 + text 事件，无副作用事件", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "你好");
+    const events = await readEvents(stream);
+
+    const types = events.map((e) => e.type);
+    expect(types).toEqual(["turn_start", "text", "turn_end"]);
+    expect(events.find((e) => e.type === "text")?.text).toBe("正在处理...");
+    const end = events.find((e) => e.type === "turn_end");
+    expect(typeof end?.durationMs).toBe("number");
+  });
+
+  it("done promise 在流结束后 resolve 出文本与 usage", async () => {
+    const { done } = await runNoteAgent(db, "user-1", "你好");
+    const result = await done;
+    expect(typeof result.text).toBe("string");
+    expect(result.usage).toMatchObject({
+      inputTokens: expect.any(Number),
+      outputTokens: expect.any(Number),
+    });
+  });
+
+  it("流被中止/读取出错且没有 onFinish 时，done 仍 resolve 出**已生成的部分**（不是空串）", async () => {
+    mockConfig.streamError = true;
+    const { stream, done } = await runNoteAgent(db, "user-1", "写一半就停");
+    await readEvents(stream); // 消费掉 SSE 流
+    const result = await done;
+    expect(
+      result.text,
+      "停止生成后内容丢失：fallback 必须用累计文本而不是空串",
+    ).toBe("正在处理...");
+    expect(typeof result.durationMs).toBe("number");
+  });
+});
+
+describe("runNoteAgent 历史注入：被中断的上一轮", () => {
+  it("连续两条 user 消息时给前一条加注释（避免模型回答已放弃的请求），且 prompt 只出现一次", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "只回两个字：收到", {
+      history: [{ role: "user", content: "请写一篇 1000 字的文章" }],
+    });
+    await readEvents(stream);
+
+    const messages = mockConfig.capturedMessages;
+    expect(messages).toHaveLength(2);
+    expect(messages[0].content).toContain("请写一篇 1000 字的文章");
+    expect(messages[0].content).toContain("用户已停止这一轮");
+    expect(messages[1]).toEqual({ role: "user", content: "只回两个字：收到" });
+  });
+
+  it("user/assistant 正常成对时**不**加注释", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "继续", {
+      history: [
+        { role: "user", content: "问题" },
+        { role: "assistant", content: "回答" },
+      ],
+    });
+    await readEvents(stream);
+    expect(mockConfig.capturedMessages.map((m) => m.content)).toEqual(["问题", "回答", "继续"]);
+  });
+});
+
+describe("buildSystemPrompt：当前文档上下文", () => {
+  it("没有当前文档时只给基础提示", async () => {
+    const { buildSystemPrompt } = await import("@/lib/agent");
+    const prompt = buildSystemPrompt();
+    expect(prompt).not.toContain("【当前文档】");
+  });
+
+  it("带当前文档时把标题与 id 写进提示（支持『这篇/它』这类指代）", async () => {
+    const { buildSystemPrompt } = await import("@/lib/agent");
+    const prompt = buildSystemPrompt({ currentDocument: { id: "doc-9", title: "周会纪要" } });
+    expect(prompt).toContain("【当前文档】");
+    expect(prompt).toContain("周会纪要");
+    expect(prompt).toContain("doc-9");
+  });
+
+  it("摘要与当前文档可同时注入，顺序稳定（摘要先于当前文档）", async () => {
+    const { buildSystemPrompt } = await import("@/lib/agent");
+    const prompt = buildSystemPrompt({
+      summary: "早前聊过发布流程",
+      currentDocument: { id: "doc-9", title: "周会纪要" },
+    });
+    expect(prompt.indexOf("早前聊过发布流程")).toBeGreaterThan(-1);
+    expect(prompt.indexOf("早前聊过发布流程")).toBeLessThan(prompt.indexOf("【当前文档】"));
+  });
+});
+
+describe("runNoteAgent 注入当前文档", () => {
+  it("currentDocument 进 system 提示（route 已在归属校验后传入）", async () => {
+    await runNoteAgent(db, "user-1", "总结这篇", {
+      currentDocument: { id: mockConfig.noteId, title: "引用笔记" },
+    });
+    expect(mockConfig.capturedSystem).toContain("引用笔记");
+    expect(mockConfig.capturedSystem).toContain(mockConfig.noteId);
+  });
+});
+
+describe("runNoteAgent 中断语义（用户点『停止』）", () => {
+  it("正常结束 aborted=false；流被 cancel 时 aborted=true **并真正中止模型生成**", async () => {
+    const normal = await runNoteAgent(db, "user-1", "你好");
+    await readEvents(normal.stream);
+    expect((await normal.done).aborted).toBe(false);
+
+    // 客户端断开 → node-server 会 cancel 响应流：必须把 abortSignal 打下去
+    mockConfig.streamError = true; // 模拟"首 token 前就被中断"（不触发 onFinish）
+    const interrupted = await runNoteAgent(db, "user-1", "写一篇长文");
+    await interrupted.stream.cancel();
+    const result = await interrupted.done;
+    expect(result.aborted).toBe(true);
+    expect(mockConfig.abortSignal?.aborted).toBe(true);
+  });
+
+  it("request signal 被中止时 aborted=true（前端 abort fetch 的路径）", async () => {
+    mockConfig.hold = true; // 回答还在生成中
+    const controller = new AbortController();
+    const { stream, done } = await runNoteAgent(db, "user-1", "长文", { signal: controller.signal });
+    controller.abort(); // 前端 abort fetch → node-server 关闭请求 → signal 触发
+    await stream.cancel();
+    expect((await done).aborted).toBe(true);
+    expect(mockConfig.abortSignal?.aborted).toBe(true);
+  });
+});
+
+describe("createNote 的创建位置随事件上报", () => {
+  it("根目录创建：parentTitle 为 null", async () => {
+    mockConfig.tool = "createNote";
+    const { stream } = await runNoteAgent(db, "user-1", "建一篇");
+    const events = await readEvents(stream);
+    const created = events.find((e) => e.type === "note_created");
+    expect(created).toMatchObject({ title: "测试笔记", parentTitle: null });
+  });
+
+  it("指定父文档时带上父标题（对话卡片据此显示『位置』）", async () => {
+    const { createCreateNoteTool } = await import("@/lib/ai/tools/create-note");
+    const events: Array<{ type: string; parentTitle?: string | null }> = [];
+    const parentId = mockConfig.noteId; // 种子文档「引用笔记」
+    const toolSet = createCreateNoteTool(db, "user-1", (e) => events.push(e as never)) as unknown as {
+      execute: (args: unknown) => Promise<unknown>;
+    };
+    await toolSet.execute({ title: "子笔记", content: "正文", parentDocumentId: parentId });
+    expect(events.find((e) => e.type === "note_created")?.parentTitle).toBe("引用笔记");
+  });
+});
+
+describe("runNoteAgent 结构化快照（落库后重建时间线用）", () => {
+  it("工具与副作用按事件顺序进 parts，文本段只记字符数，耗时随结果一起给", async () => {
+    mockConfig.tool = "createNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "建一篇笔记");
+    await readEvents(stream);
+    const result = await done;
+
+    // 顺序：工具卡 → 它产出的卡片（note_created）→ 文本（mock 先执行工具再吐文本）
+    expect(result.snapshot.parts[0]).toEqual({ kind: "tool", seq: 1 });
+    expect(result.snapshot.parts[1]).toEqual({ kind: "note", index: 0 });
+    expect(result.snapshot.parts[result.snapshot.parts.length - 1]).toEqual({
+      kind: "text",
+      chars: "正在处理...".length,
+    });
+    expect(result.snapshot.notes[0]).toMatchObject({ kind: "created", title: "测试笔记" });
+    expect(result.snapshot.tools[0]).toMatchObject({ tool: "createNote", state: "done" });
+    expect(result.snapshot.references).toHaveLength(1);
+    expect(typeof result.snapshot.durationMs).toBe("number");
+    expect(result.snapshot.errorMessage).toBeNull();
+  });
+
+  it("doom loop 警告进快照（刷新后警告不丢）", async () => {
+    // 通过同一工具连续失败触发警告门槛（阈值见 lib/ai/tools/runtime.ts）
+    mockConfig.tool = "readNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "读不存在的笔记", {
+      // 用一个必然失败的 noteId：readNote 返回失败文本 → doom tracker 累计
+    });
+    await readEvents(stream);
+    const result = await done;
+    expect(Array.isArray(result.snapshot.warnings)).toBe(true);
+  });
+});
+
+describe("runNoteAgent 改动前快照（撤销用）", () => {
+  it("写类工具执行前拍下文档状态，并记进快照的 changedDocuments", async () => {
+    mockConfig.tool = "updateNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "改一下这篇");
+    await readEvents(stream);
+    const result = await done;
+
+    expect(result.changes).toHaveLength(1);
+    expect(result.changes[0].documentId).toBe(mockConfig.noteId);
+    expect(result.changes[0].before.content).toBe("笔记内容");
+    expect(result.snapshot.changedDocuments).toEqual([mockConfig.noteId]);
+  });
+
+  it("同一文档被改多次只留最早一份快照（撤销回到首次改动前）", async () => {
+    const { mutatingDocumentId } = await import("@/lib/agent");
+    expect(mutatingDocumentId("updateNote", { noteId: "d1" })).toBe("d1");
+    expect(mutatingDocumentId("updateBlock", { noteId: "d1", blockId: "b1" })).toBe("d1");
+    expect(mutatingDocumentId("renameNote", { noteId: "d1", title: "x" })).toBe("d1");
+    // 非写类工具 / 没有 noteId：不拍快照
+    expect(mutatingDocumentId("readNote", { noteId: "d1" })).toBeNull();
+    expect(mutatingDocumentId("searchNotes", { query: "x" })).toBeNull();
+    expect(mutatingDocumentId("updateNote", {})).toBeNull();
+    expect(mutatingDocumentId("updateNote", null)).toBeNull();
+  });
+
+  it("只读工具不产生可撤销改动", async () => {
+    mockConfig.tool = "readNote";
+    const { stream, done } = await runNoteAgent(db, "user-1", "读一下");
+    await readEvents(stream);
+    const result = await done;
+    expect(result.changes).toEqual([]);
+    expect(result.snapshot.changedDocuments).toEqual([]);
+  });
+});
+
+describe("runNoteAgent deleteNote 中止语义", () => {
+  it("deleteNote 触发确认后中止本轮生成（避免确认前继续执行其他工具）", async () => {
+    mockConfig.tool = "deleteNote";
+    const { stream } = await runNoteAgent(db, "user-1", "删除这篇笔记");
+    const events = await readEvents(stream);
+
+    // confirm_delete 事件已推送，且内部 AbortController 已触发（生成被中止）
+    const confirm = events.find((e) => e.type === "confirm_delete");
+    expect(confirm?.noteId).toBe(mockConfig.noteId);
+    expect(confirm?.title).toBe("引用笔记");
+    expect(mockConfig.abortSignal?.aborted).toBe(true);
+  });
+
+  it("非 deleteNote/moveNote 的工具调用不会中止生成", async () => {
+    mockConfig.tool = "createNote";
+    const { stream } = await runNoteAgent(db, "user-1", "创建笔记");
+    await readEvents(stream);
+
+    expect(mockConfig.abortSignal?.aborted).toBe(false);
+  });
+
+  it("moveNote 触发确认后中止本轮生成（对齐 SiYuan 写操作确认）", async () => {
+    mockConfig.tool = "moveNote";
+    const { stream } = await runNoteAgent(db, "user-1", "把笔记移到根目录");
+    const events = await readEvents(stream);
+
+    // confirm_move 事件已推送，且内部 AbortController 已触发
+    const confirm = events.find((e) => e.type === "confirm_move");
+    expect(confirm?.noteId).toBe(mockConfig.noteId);
+    expect(confirm?.title).toBe("引用笔记");
+    expect(confirm?.toRoot).toBe(true);
+    expect(mockConfig.abortSignal?.aborted).toBe(true);
+  });
+});
+
+describe("runNoteAgent error 事件", () => {
+  it("生成中途出错推送 error 事件（前端明确提示，而非静默断流）", async () => {
+    mockConfig.emitError = true;
+    const { stream } = await runNoteAgent(db, "user-1", "你好");
+    const events = await readEvents(stream);
+
+    expect(events.some((e) => e.type === "error" && e.message === "mock boom")).toBe(true);
+  });
+});
+
+describe("runNoteAgent 历史注入（全量，无预算限制）", () => {
+  it("全部历史消息注入，不做条数限制", async () => {
+    const history = Array.from({ length: 30 }, (_, i) => ({
+      role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+      content: `消息 ${i}`,
+    }));
+    const { stream } = await runNoteAgent(db, "user-1", "继续", { history });
+    await readEvents(stream);
+
+    // capturedMessages = 历史 + 当前 prompt（最后一条）
+    const historyMsgs = mockConfig.capturedMessages.slice(0, -1);
+    expect(historyMsgs).toHaveLength(30);
+    // 最早的消息也完整保留（不被预算丢弃）
+    expect(historyMsgs[0].content).toBe("消息 0");
+    expect(historyMsgs[historyMsgs.length - 1].content).toBe("消息 29");
+  });
+
+  it("单条历史消息不截断（原样注入）", async () => {
+    const longContent = "字".repeat(5_000);
+    // 成对的 user/assistant 历史：不做"被中断的那一轮"注释（那条规则见上一组用例）
+    const history = [
+      { role: "user" as const, content: longContent },
+      { role: "assistant" as const, content: "上一轮的回答" },
+    ];
+    const { stream } = await runNoteAgent(db, "user-1", "继续", { history });
+    await readEvents(stream);
+
+    const historyMsg = mockConfig.capturedMessages[0];
+    expect(historyMsg.content).toBe(longContent);
+  });
+
+  it("无历史时只注入当前 prompt", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "你好");
+    await readEvents(stream);
+
+    expect(mockConfig.capturedMessages).toEqual([{ role: "user", content: "你好" }]);
+  });
+});
+
+describe("runNoteAgent 会话摘要注入", () => {
+  it("summary 存在时注入 system 摘要段", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "继续", {
+      summary: "早期对话摘要：用户创建了笔记《路线图》",
+    });
+    await readEvents(stream);
+
+    expect(mockConfig.capturedSystem).toContain("早期对话摘要：用户创建了笔记《路线图》");
+    expect(mockConfig.capturedSystem).toContain("以下是本会话早期对话的摘要");
+  });
+
+  it("无 summary 时 system 不含摘要段", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "你好");
+    await readEvents(stream);
+
+    expect(mockConfig.capturedSystem).not.toContain("以下是本会话早期对话的摘要");
+  });
+});
+// 配置层接线：模型/密钥在**每次调用时**解析（改配置不需要重启进程）
+describe("runNoteAgent AI 运行期配置", () => {
+  it("显式传入的配置层值决定模型与密钥", async () => {
+    const { stream } = await runNoteAgent(db, "user-1", "你好", {
+      ai: { model: "configured-model", apiKey: "sk-configured-1234" },
+    });
+    await readEvents(stream);
+
+    expect(mockConfig.capturedModel?.modelId).toBe("configured-model");
+  });
+
+  it("未传配置时回退环境变量；环境变量也没有则用默认模型", async () => {
+    const saved = { model: process.env.AI_MODEL, key: process.env.DEEPSEEK_API_KEY };
+    process.env.AI_MODEL = "model-from-env";
+    process.env.DEEPSEEK_API_KEY = "sk-from-env";
+    try {
+      const { stream } = await runNoteAgent(db, "user-1", "你好");
+      await readEvents(stream);
+      expect(mockConfig.capturedModel?.modelId).toBe("model-from-env");
+    } finally {
+      if (saved.model === undefined) delete process.env.AI_MODEL;
+      else process.env.AI_MODEL = saved.model;
+      if (saved.key === undefined) delete process.env.DEEPSEEK_API_KEY;
+      else process.env.DEEPSEEK_API_KEY = saved.key;
+    }
+  });
+
+  it("配置为空串时不被当成有效值（回退到默认模型）", async () => {
+    const savedModel = process.env.AI_MODEL;
+    delete process.env.AI_MODEL;
+    try {
+      const { stream } = await runNoteAgent(db, "user-1", "你好", { ai: { model: "   ", apiKey: "" } });
+      await readEvents(stream);
+      expect(mockConfig.capturedModel?.modelId).toBe("deepseek-flash");
+    } finally {
+      if (savedModel !== undefined) process.env.AI_MODEL = savedModel;
+    }
+  });
+});

@@ -1,304 +1,278 @@
-# MyLotion
+# Lotion — AI 笔记（本地单机版）
 
-> 照着 Lotion 逐块拆解，把 AI 笔记应用的核心机制用可测试的纯 TS 复刻一遍 —— 目标是**讲清楚**，不是背代码。
-> **仓库**：[RobertLewy9/MyLotion-main](https://github.com/RobertLewy9/MyLotion-main) · **当前状态（2026-11-05）**：Day 1–8 已完成；Day 9 材料已就绪，待口述与力扣打卡。
+<p align="center">
+  <img src="./assets/readme/hero.svg?v=3" width="100%" alt="Lotion：全栈 AI 笔记应用——DSH 风格三栏布局、无限层级文档树、BlockNote 富文本编辑，DeepSeek Agent 通过 SSE 事件流实时管理笔记">
+</p>
 
-Lotion 是一个全栈 AI 笔记应用：无限层级文档树、BlockNote 富文本编辑、DeepSeek Agent 自主增删改查笔记。
-本仓库 **不是** Lotion 的分支或复制品，而是我把它的关键机制拆成「一天一块」、亲手复刻的靶场。
-代码由 AI 产出，我负责**读懂 → 讲清楚 → 扛住追问**。
+> `feature/vite-hono` 是仓库唯一分支兼默认分支，即本地单机版：SQLite 本地数据库 + 自研 Auth + REST API。前身 Supabase 网络数据库版（Next.js）已归档为 tag `archive/supabase-main`，仅作只读历史基线。详见 [docs/项目/本地数据库版.md](docs/项目/本地数据库版.md)。
+>
+> 架构是**插件化**的（内核 + 8 条接缝 + 内置插件）：内核用 `@deepseek-ai/cordis`，全仓库只有 `lib/kernel/cordis.ts` 一处 import 它。见 [docs/项目/插件化架构.md](docs/项目/插件化架构.md)，第三方插件格式见 [docs/项目/插件开发.md](docs/项目/插件开发.md)。
 
-## 学习策略：四轨并行
+全栈 AI 笔记应用：**Vite 8 + React 19** 前端 SPA（react-router 7），**Hono 4** 单进程提供 REST API 与静态资源，**SQLite 本地数据库**存储，**BlockNote 0.54** 负责富文本编辑，**DeepSeek Agent**（19 个工具）帮你搜索、创建、修改和整理笔记。界面遵循 **Apple / macOS 视觉语言**：系统色板、半透明材质、SF 字体栈与克制的圆角阴影，明暗双主题完整适配。
 
-> 文件怎么找：命名统一为 `dayNN-<轨>-<主题>`，**所有文件 × Day × 轨 的总表见 `docs/00-文件索引.md`**。
+## 特性
 
-| 轨 | 做什么 | 产出 |
-|----|--------|------|
-| **A · MyLotion** | 读实现 / 架构 → 理解流程 → 写讲稿 → 被追问 | `docs/讲稿/dayNN-*.md` |
-| **B · 八股（单轨交替）** | 单日 B1 前端 / 双日 B2 Agent，每次 **3 题 + 1 题项目落地**，开口讲不默读 | `docs/B1-前端八股考点.md` / `docs/B2-Agent八股考点.md` 打勾 + 题纸 |
-| **C · 力扣手撕** | 每天 2 题，限时 20 分钟/题 + 跑测试 | `docs/C-力扣Hot100题单.md` 打勾 + `src/interview/*.ts` |
-| **✱ 简历对齐** | A 轨末尾挑简历上的一条词，用「① 干什么 ② 完整流程 ③ 为什么选它」讲 2 分钟 | `docs/全轨-简历映射.md` 打勾 + 卡壳记日志 |
+**布局与组织**
 
-- **依据一**：8 场大厂实习面经（B站 / CSIG / IEG / 快手 / 携程 / 腾讯云智）。考点分布：八股 ~60%、项目深挖 ~30%、手撕 ~10%。
-- **依据二**：在腾讯做 Agent 开发实习的朋友 ——「重点就是你把项目吃透。他只会看着你简历问呀。你所有涉及到的每一个技术栈、中间件，在你项目里怎么用、流程怎么样，都得吃透。然后 agent 开发就是 agent 八股。」
-- **简历即考纲**：面试官只看着简历问，所以准备单位是「简历上的一个词」而非知识点。逐词映射表（在我项目里 / 会被追什么 / 对应材料 Day）见 `docs/全轨-简历映射.md`；写了却讲不出的词，**要么补上、要么从简历删掉**。
-- **时间轴**：Day 1–8 已完成；Day 9 材料于 2026-11-05 就绪，后续按学习计划推进（45 天是节奏目标，不是每天满配的配额），排期见 `docs/00-学习计划.md`。
-- **难度校准**：Day 4–7 已按 8 份面经重新筛选，超纲的 tick 推演、curry 实现、bind polyfill、Prompt 大专题已移出必做；依据见 docs/00-Day4-7-面经校准.md。
-- **讲稿是版本递进的**：v1 认地图 → 每个阶段复盘升一版 → Day 42 全链路终稿。
+- **Apple 风格三栏布局** — `sidebar | center | details` 可拖拽（侧边栏 264-420px、AI 面板 300-520px），让步链优先保证中心列 ≥ 640px；侧边栏/详情栏为半透明材质（vibrancy），可折叠成 56px 图标 rail，视口 < 1024px 自动折叠
+- **macOS 视觉系统** — 系统色板（systemBlue 主色 / 分级 label / 发丝分隔线）、SF 字体栈、连续圆角与多层柔和阴影、Apple 减速曲线；明暗双主题各自独立取值
+- **无限层级文档树** — `parentDocument` 自引用嵌套，任意深度组织笔记；32px 行高、hover 浮现「新建子笔记 / 更多」操作与相对时间
+- **内嵌搜索胶囊** — 侧边栏头部点击展开全宽输入框，即时过滤文档树；`Cmd/Ctrl + J` 全局命令面板
+- **回收站与草稿** — 搜索过滤、单条恢复 / 永久删除（删除需二次确认）；AI 新建笔记默认进入确认制草稿
+- **发布预览** — 一键发布生成公开链接并复制到剪贴板（无鉴权端点仅吐已发布文档，单机语义）
 
-## 当前进度
+**编辑器（BlockNote 0.54，对标 Notion）**
 
-| Day | 主题 | 状态 |
-|-----|------|------|
-| Day 1 | 扁平数组还原成文档树（`buildTree`） | ✅ |
-| Day 2 | 一次算出整棵子树（`collectSubtreeIds`） | ✅ |
-| Day 3 | 文档提及解析（`extractMentions` / `truncateMentionTitle`） | ✅ |
-| Day 4 | 认地图 + 事件循环（B1）+ Agent 全景（B2）+ 手撕 01（C） | ✅ |
-| Day 5 | 画架构图 + async/await（B1）+ LLM 基础（B2）+ Hot 100 开篇（C） | ✅ |
-| Day 6 | 数据层取数模块（A）+ 闭包（B1）+ Agent 词汇与 Tool Calling（B2）+ 两道题解（C） | ✅ |
-| Day 7 | 全量建树 / 懒加载模块（A）+ 箭头函数与 this（B1）+ MCP 深入与 Skills（B2）+ 清 C 轨欠账 | ✅ |
-| Day 8 | 文档详情缓存（A）+ 原型链与继承（B1）+ Agent Loop 与安全闸门（B2）+ 最长子串 / 接雨水（C） | ✅ |
-| Day 9 | 缓存失效 / `fresh` / `prefetch`（A）+ Map 与 WeakMap（B1）+ 记忆与 RAG（B2）+ 两道题解（C） | 🟡 材料就绪，待口述 / 打卡 |
+- **BlockNote JSON 无损存储** — 保留块 ID；存量 Markdown 与旧版 BlockNote JSON 惰性兼容，无需手工迁移
+- **代码块语法高亮** — shiki（`@blocknote/code-block`），schema 客户端 / 服务端共享
+- **斜杠菜单 Notion 式分组** — 基础 / 媒体 / 高级 / 其他，含自定义 Callout 块（点击图标换 emoji）
+- **@ 提及文档** — 输入 `@` 搜索当前用户文档并插入胶囊，点击跳转
+- **页面大纲 TOC** — 右侧 Outline 面板提取标题层级树，点击定位到对应块
+- **页面宽窄切换** — narrow（`max-w-3xl`）/ wide（`max-w-5xl`），localStorage 持久化
+- **图片与封面** — 拖拽上传到本地磁盘、封面图、Emoji 图标
 
-手撕轨：**C 轨主线已拆成两部分** —— 力扣 Hot 100（`docs/C-力扣Hot100题单.md`，每天 2 题）+ 面经真题（前端手撕类，Hot 100 覆盖不到的）。
-已完成：01 `EventEmitter`（12/12 用例），题解见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-**C 轨进度**：Day 5–8 的 6 道 Hot 100 已按题单完成力扣打卡；Day 9 的「找到字符串中所有字母异位词 + 和为 K 的子数组」题解和本地 TODO 靶子已就绪，待力扣首刷。仓库内对应 `src/interview/*.ts` 仍保留 TODO 作为本地复写靶子，红测不代表学习未完成。
+**AI Agent**
 
-## Day 1 —— 扁平数组还原成文档树
+- **19 个工具自主决策** — 检索 / 写入 / 组织 / 交互四类（见下），SSE 事件流实时推送每一步进度
+- **流式事件协议** — 14 种事件类型，前端按事件行解析（非拼接文本 + 正则提取）
+- **Doom loop 检测** — 相同工具 + 参数连续失败 3 次警告、5 次中止（对齐 SiYuan）
+- **上下文压缩** — 滑动窗口保留最近 100 条消息原文（注入最近 N 条），滑出部分由模型重写式摘要（`lib/compress.ts`）
+- **常驻 AI 面板** — details 列常驻挂载，关闭不丢状态；⌘J / Ctrl+J 开合，窄屏自动变右侧浮层
+- **回合快照** — 每轮的工具卡 / 副作用卡 / 引用 / 待办 / 提问 / 耗时随 assistant 消息落库
+  （`chat_messages.metadata`），刷新或切换会话后时间线完整重建（不再只剩一段纯文本）
+- **AI 改动可撤销** — 写类工具执行前先拍文档快照（`ai_changes` 表），回合操作条的
+  「撤销本次改动」把标题/正文/图标/发布态等恢复回去（幂等、可跨多篇文档）
+- **附件上下文** — 可附加 .md/.txt/.json/.csv 等文本文件（单文件 20k 字符、单轮最多 3 个），
+  内容当轮拼进 prompt，清单落在用户消息上（刷新后仍看得到附了什么）
+- **当前文档上下文** — 提问自动带上正在查看的文档，说"这篇 / 它"无需再 @
+- **会话绑定文档** — 新建会话自动绑定当前文档，历史列表可切换「全部会话 / 只看本文档」
+- **建完即跳转查看，确认在对话里** — AI 新建笔记后自动切到该文档让用户查看内容（无需先保存），
+  对话卡片同时给出「打开看看 / 丢弃 / 确认保存」与**创建位置**；文档页不再有确认横幅（`DraftBanner` 已移除）
 
-Lotion 的 `documents` 表用 `parentDocument` 自引用实现「无限层级」，
-`getSidebarAll()` 一次性把全部文档当**扁平数组**拉回来（避免 N 次查询），
-前端再还原成**树**。Day 1 的任务就是用 **O(n)** 的两遍 `Map` 扫描，
-替代朴素的递归 `filter`（O(n²)），把扁平数组还原成嵌套树。
+**插件系统**
 
-覆盖的规则：
+- **设置 → 插件** — 内置能力也按插件装配：核心 / 内置 / 已安装 / AI 动态分组，开关、状态、配置、
+  源码预览；所有登录账号权限一致
+- **实时启停** — 路由注册表可逆 + 请求级实时分发：启停静态/已安装插件的 tools 与 httpRoutes 立即生效；
+  UI 插件（AI 面板）需刷新页面
+- **第三方插件包** — `data/plugins/installed/<id>/plugin.json`（manifest + host/client 代码），
+  设置页可配置、审批、卸载；格式与 API 见 [docs/项目/插件开发.md](docs/项目/插件开发.md)，模板在 `templates/plugin/`
+- **侧边栏顶部入口** — 「插件市场」是侧边栏头部图标组里的一枚按钮（与 AI 助手 / 新建同排，`/market` 独立页），
+  不再单占一整行、也不再塞在设置弹窗里；
+  所有登录账号权限一致：浏览、安装/更新、评分、上传、发布、市场源都可操作
+- **本地市场** — `public/plugin-market/registry.json` 发现/安装示例插件（word-count / daily-quote）；
+  安装 ≠ 启用 ≠ 批准，客户端半边必须人工审批；市场卡片直接提供「启用 → 批准 → 刷新页面」
+- **搜索 / 分类 / 排序** — 市场页支持关键词（名称/描述/标签/作者）、分类筛选与
+  推荐/下载量/评分/最近更新/名称排序
+- **远端在线 registry** — 市场页可填 HTTPS registry URL（`LOTION_MARKET_URL` 也可），
+  远端失败自动回退本地；30s 缓存避免重复请求
+- **上传 / 发布 / 导出** — 市场页上传 `plugin.json`；已安装插件可导出包或发布到本地市场
+  （写入 `data/plugin-market/`，选择目录里不写代码）
+- **版本更新** — 市场条目与已安装版本比较，显示「可更新 vX」；更新保留启用态与配置，
+  客户端代码变化会重置审批，要求重新批准
+- **评分 / 评论 / 下载量** — 本地统计落 `data/plugin-market/stats.json`，与 registry 基线合并展示
+- **完整性 / 签名 / 权限声明** — bundle 计算 sha256；registry 提供 sha256 时校验；
+  配置 `LOTION_MARKET_PUBLIC_KEY` 后支持 Ed25519 验签，`requireSignature` 可强制；
+  安装确认框列出 capabilities（tools / httpRoutes / ui）
+- **AI 动态插件** — 模型用 `plugin_*` 工具现场定义；定义持久化到 `data/plugins/dynamic/`，
+  重启后仍在但运行状态不自动恢复；客户端半边在设置页审批后下发
+- **安全姿态（如实）** — `node:vm` / 浏览器 `new Function` **不是安全边界**，插件与 Lotion 进程同信任级别；
+  默认关闭动态通道，安装不自动启用，客户端半边必须人工批准
 
-1. `parentDocument === null` 的文档是根节点
-2. 其余文档挂到 `parentDocument` 对应节点的 `children` 里
-3. 同级节点保持传入数组的相对顺序
-4. `parentDocument` 指向不存在的文档时，该文档提升为根节点（孤儿节点不消失）
-5. 纯函数：不修改传入的数组或对象
+## 它如何工作
 
-### 用法
-
-```ts
-import { buildTree, type SidebarDocument } from "@/src/tree";
-
-const docs: SidebarDocument[] = [
-  { id: "a", title: "根文档", parentDocument: null, createdAt: "2026-01-01T00:00:00.000Z" },
-  { id: "b", title: "子文档", parentDocument: "a", createdAt: "2026-01-01T00:00:00.000Z" },
-];
-
-const tree = buildTree(docs);
-// tree[0].children[0].id === "b"
-```
-
-## Day 2 —— 一次算出整棵子树
-
-Lotion 的 `lib/db.ts` 里 `archive()` / `restore()` 是这么写的：拿到一个节点，
-先查一次它的直接子节点，再对每个孩子递归调用自己 —— **每下一层就是一次网络往返**。
-一棵 100 节点、5 层深的文档，归档一次要上百次查询（典型的 N+1），又慢又可能中途失败。
-
-既然 Day 1 的 `getSidebarAll()` 已经能把整棵树当扁平数组一次拉回来，
-「某文档的全部后代」就能在内存里 **O(n)** 算完，再拿这串 id 做**一次**批量更新
-（`.in("id", ids)`）。Day 2 的题目就是写这个 `collectSubtreeIds`。
-
-覆盖的规则：
-
-1. 返回 `rootId` 的所有后代 id（子、孙、曾孙…），**不含 rootId 自身**
-2. 顺序：广度优先（BFS）逐层展开；同一层按 `docs` 中的相对顺序
-3. `rootId` 不在 `docs` 里 → 返回 `[]`（不抛错）
-4. `rootId` 没有后代 → 返回 `[]`
-5. 纯函数：不修改传入的数组或对象
-6. 防环：数据损坏成 `a↔b` 时不能死循环，每个 id 最多出现一次
-
-## Day 3 —— 文档提及解析
-
-AI 面板的胶囊输入框选中文档后，会把它序列化成标记文本，随 prompt 一起发给服务端：
+用户输入经过 `/api/ai/chat` 进入 Agent 循环：`streamText` 驱动 DeepSeek 自主调用工具，工具副作用经 `onEvent` 回调上报事件队列，再以 SSE 事件流逐条推送给前端：
 
 ```
-[@季度总结](9f8c1e2a)
+用户 prompt → POST /api/ai/chat → streamText({ model: AI_MODEL, tools: 19 个, stopWhen: stepCountIs(5) })
+  → AI 调用 Tool（search/list/read/create/update/rename/move/icon/publish/archive/restore/trash/delete/
+                  askUser/todoWrite/docInfo/docOutline/docBlocks/updateBlock）
+  → onEvent 上报副作用（创建 / 修改 / 删除确认 / 移动确认 / 提问 / 待办 / 引用）
+  → SSE 事件行 data: <json> → 前端解析 → 跳转 / 刷新 / 确认 / 进度展示
+  → onFinish 落库 assistant 消息 + 回合快照；写类工具执行前落库"改动前快照"（撤销用）
 ```
 
-**注意：服务端主链路并不解析这段文本** —— 而是靠系统提示词约定
-「看到 `[@标题](id)` 就直接用其中的 id 调 `readNote`」，由**模型自己识别**。
+| 事件类型 | 含义 |
+|----------|------|
+| `turn_start` | 一轮 Agent 循环开始（轮次 + 起始时间） |
+| `text` | AI 回复文本流 |
+| `tool_start` | 工具开始执行（名称 / 序号 / 标签 / 参数） |
+| `tool_end` | 工具执行结束（成功与否 + 摘要） |
+| `note_created` | 已创建笔记（草稿 + 创建位置；前端自动跳转查看，确认保存/丢弃在对话卡片里完成） |
+| `note_modified` | 笔记已被修改 |
+| `confirm_delete` | 请求确认永久删除 |
+| `confirm_move` | 请求确认移动笔记 |
+| `question` | 向用户提出结构化问题（`askUser`） |
+| `todo_update` | 多步任务清单更新（`todoWrite`） |
+| `reference` | 关联笔记引用 |
+| `warning` | doom loop 重复失败警告 |
+| `turn_end` | 一轮结束（耗时 + token 统计） |
+| `error` | 生成中途出错（模型 API 异常等） |
 
-`lib/mention.ts` 的价值是把这套协议收敛成可复用的纯函数：
-`truncateMentionTitle` 前端渲染胶囊时在用；`extractMentions` 目前没有生产调用方（只有单测）。
+### Agent 工具（19 个）
 
-覆盖的规则：
+| 类别 | 工具 |
+|------|------|
+| 检索 | `searchNotes` `listNotes` `readNote` `getDocInfo` `getDocOutline` `getDocBlocks` |
+| 写入 | `createNote` `updateNote` `renameNote` `moveNote` `setNoteIcon` `updateBlock` |
+| 组织 | `publishNote` `archiveNote` `restoreNote` `listTrash` `deleteNote` |
+| 交互 | `askUser` `todoWrite` |
 
-1. `extractMentions(text)`：匹配 `[@标题](id)`，标题不含 `]`、id 为字母/数字/连字符且长度 3~64
-2. 按出现顺序返回；标题去首尾空白，空标题跳过；同一 id 只保留首次出现
-3. `truncateMentionTitle(title, maxChars = 4)`：先 trim，超长则截断并补 `…`
-4. 纯函数、可重复调用（注意带 `g` 的正则 `lastIndex` 是有状态的）
-
-## Day 4 —— 认地图
-
-不求讲通细节，先给自己一个坐标系：这套系统**有哪几块、各干什么、怎么串**。
-
-- **三层**：前端（侧边栏树 / BlockNote 编辑器 / AI 面板）→ API + Agent（鉴权、上下文、模型与工具调用）→ 数据层（单表自引用 + RLS）
-- **主链路**：用户输入 → 前端 POST `/api/ai/chat` → 鉴权 / 幂等落库 / 拉历史 → `streamText` 驱动 Agent → 调用工具改库 → `onEvent` 上报副作用 → SSE 推回前端 → 前端按 `type` 分发（渲染文本 / 显示进度 / 跳转刷新 / 弹确认框）
-- **关键前提**：工具跑在**服务端**，前端看不见它的内部执行，所以副作用必须显式上报
-
-产出：`docs/讲稿/day04-A-架构通读.md`（v1，60 秒口述稿）。
-完整版见 `docs/A-架构总览.md`。
-
-### C 轨 · 手撕 01 —— EventEmitter
-
-IEG 一面题。核心是一张 `Map<事件名, 监听器数组>`，三个细节是追问点：
-
-- **`once` 用包装函数**：触发时先 `off` 自己、再调原函数（先摘再跑）。反过来写，原函数里再 `emit` 同一事件就会递归重入
-- **包装函数上挂 `listener` 指回原函数**：这样 `off(event, 原函数)` 也能移除 once 注册过的监听器（对齐 Node 行为）
-- **`emit` 遍历 `[...list]` 快照**：本轮触发哪些监听器，在开始时定死；否则回调里新 `on` 的监听器会在本轮就被调用
-
-另外 `off` 移除后若该事件已无监听器，要把 key 一起 `delete`，否则 `Map` 会随动态事件名无限增长。
-
-> 注意：上面两条语义（快照、先摘再跑）**原来的 10 条用例全都盖不住** —— 把快照去掉、或把 `off` 挪到 `fn` 之后，
-> 测试依然全绿。已补 2 条用例把它们钉住。
-
-题解与追问预判见 `docs/讲稿/day04-C-手撕01-EventEmitter.md`。
-
-### B 轨 · 事件循环（面经校准版）
-
-B站 / CSIG / 腾讯云智一面确实问，但实际深度是：**同步代码跑完 → 清空微任务 → 取一个宏任务**，
-再加一道输出题。当前题纸只保留 **4 概念 + 4 输出 + 1 项目场景**，约 20 分钟。
-
-保留的四个判断点：
-
-- Promise 回调是微任务，`setTimeout` 是宏任务；
-- `new Promise(executor)` 的 executor 同步执行；
-- `async` 函数同步跑到第一个 `await`，后面的续体是微任务；
-- 一个微任务里新排的任务进队尾，要等本轮已排队的微任务跑完。
-
-题目与答案见 `docs/八股/day04-B1-事件循环.md`（同页）。
-`process.nextTick` 与 Promise 的先后、thenable 多 tick、4ms 定时器饥饿、React 18 批处理不在本轮 8 场面经的追问范围里，已移出必做。
-
-## 技术栈
-
-- **TypeScript**（`strict` 模式，`noEmit`，仅做类型检查）
-- **Vitest** 4 —— 单元测试与 watch 模式
-- **pnpm** —— 包管理（仓库内含 `pnpm-lock.yaml`）
-- 路径别名 `@/*` 指向仓库根目录
-
-## 目录结构
-
-> 命名规则：`dayNN-<轨>-<主题>`；**轨 = A（MyLotion）/ B1（前端八股）/ B2（Agent 八股）/ C（力扣手撕）**。
-> 全时段文档用 `00-`（元文档）、`全轨-`（跨轨）或直接以轨名开头。完整对照表见 `docs/00-文件索引.md`。
-
-```
-MyLotion-main/
-├── src/
-│   ├── tree.ts                     # Day 1 · A 轨：buildTree
-│   ├── subtree.ts                  # Day 2 · A 轨：collectSubtreeIds
-│   ├── mention.ts                  # Day 3 · A 轨：extractMentions / truncateMentionTitle
-│   ├── data/
-│   │   ├── documents.ts            # Day 6 · A 轨：selectSidebarRows / indexByParent（12 用例 ✅）
-│   │   ├── sidebar.ts              # Day 7 · A 轨：getSidebarTree / getChildren / createSidebarIndex（10 用例 ✅）
-│   │   └── document-cache.ts       # Day 8-9 · A 轨：并发去重 + LRU + fresh / prefetch（18 用例 ✅）
-│   ├── interview/                  # C 轨：力扣 Hot 100 / 手撕
-│   │   ├── event-emitter.ts        # Day 4 · 手撕 01（12/12 ✅）
-│   │   ├── two-sum.ts              # Day 5 · 力扣已打卡 / 本地待复写
-│   │   ├── group-anagrams.ts       # Day 5 · 力扣已打卡 / 本地待复写
-│   │   ├── longest-consecutive.ts  # Day 6 · 力扣已打卡 / 本地待复写
-│   │   ├── move-zeroes.ts          # Day 6 · 力扣已打卡 / 本地待复写
-│   │   ├── longest-substring.ts    # Day 8 · 力扣已打卡 / 本地待复写
-│   │   ├── trap-rain-water.ts      # Day 8 · 力扣已打卡 / 本地待复写
-│   │   ├── find-anagrams.ts        # Day 9 · 力扣待打卡 / 本地 TODO
-│   │   └── subarray-sum.ts         # Day 9 · 力扣待打卡 / 本地 TODO
-│   └── test.js                     # 随手写的 JS 草稿
-├── test/
-│   ├── tree.test.ts                # Day 1 · A
-│   ├── subtree.test.ts             # Day 2 · A
-│   ├── mention.test.ts             # Day 3 · A
-│   ├── data/
-│   │   ├── documents.test.ts       # Day 6 · A（12 用例 ✅）
-│   │   ├── sidebar.test.ts         # Day 7 · A（10 用例 ✅）
-│   │   └── document-cache.test.ts  # Day 8-9 · A（18 用例 ✅）
-│   └── interview/                  # Day 4~9 · C
-│       ├── event-emitter.test.ts
-│       ├── two-sum.test.ts
-│       ├── group-anagrams.test.ts
-│       ├── longest-consecutive.test.ts
-│       ├── move-zeroes.test.ts
-│       ├── longest-substring.test.ts
-│       ├── trap-rain-water.test.ts
-│       ├── find-anagrams.test.ts
-│       └── subarray-sum.test.ts
-├── docs/
-│   ├── 00-文件索引.md              # ★ 所有文件 × Day × 轨 的总表
-│   ├── 00-学习策略.md              # 为什么这么学（8 场面经 + 简历即考纲）
-│   ├── 00-学习计划.md              # 45 天四轨日历 + 节奏规则 + 完善路线
-│   ├── A-架构总览.md               # A 轨主线：三层 / 主链路 / 边界与演进
-│   ├── 全轨-简历映射.md            # 简历上的词 → 项目角色 → 会被追问什么
-│   ├── B1-前端八股考点.md          # B1 清单 + STAR 故事库 + 反问清单
-│   ├── B2-Agent八股考点.md         # B2 清单（LLM / Prompt / Agent / Tool / MCP / RAG）
-│   ├── C-力扣Hot100题单.md         # C 轨题单 + 打卡
-│   ├── 讲稿/                        # A 轨讲稿（day04-C 为 C 轨题解）
-│   │   ├── _模板.md
-│   │   ├── day01-A-示例-buildTree.md
-│   │   ├── day04-A-架构通读.md
-│   │   ├── day04-C-手撕01-EventEmitter.md
-│   │   ├── day05-A-架构自绘.md
-│   │   ├── day06-A-数据层.md
-│   │   ├── day07-A-全量拉取与懒加载.md
-│   │   ├── day08-A-请求去重与内存缓存.md
-│   │   ├── day09-A-缓存失效与预取.md
-│   │   ├── day06-C-最长连续序列.md
-│   │   ├── day06-C-移动零.md
-│   │   ├── day08-C-无重复字符的最长子串.md
-│   │   ├── day08-C-接雨水.md
-│   │   ├── day09-C-找到字符串中所有字母异位词.md
-│   │   ├── day09-C-和为K的子数组.md
-│   │   └── 术语人话版.md           # 全轨通用
-│   ├── 八股/                        # B1 / B2 题目 + 答案（同页）
-│   │   ├── day04-B1-事件循环.md
-│   │   ├── day04-B2-Agent全景.md
-│   │   ├── day05-B1-输出题与async形态.md
-│   │   ├── day05-B2-LLM基础.md
-│   │   ├── day06-B1-闭包.md
-│   │   ├── day06-B2-Agent核心.md
-│   │   ├── day07-B1-this与call-apply-bind.md
-│   │   ├── day07-B2-MCP与Skills.md
-│   │   ├── day08-B1-原型链与继承.md
-│   │   ├── day08-B2-Agent运行时.md
-│   │   ├── day09-B1-Map-WeakMap与内存泄漏.md
-│   │   └── day09-B2-记忆与RAG基础.md
-│   ├── 速记/
-│   │   ├── day05-A-速记.md
-│   │   └── day05-A-速记-qq版.txt
-│   └── 日志/
-│       ├── day04-全轨-日志.md
-│       ├── day05-全轨-日志.md
-│       ├── day06-全轨-日志.md
-│       ├── day07-全轨-日志.md
-│       ├── day08-全轨-日志.md
-│       └── day09-全轨-日志.md
-├── package.json
-├── tsconfig.json
-└── vitest.config.mts
-```
 ## 快速开始
 
 ### 前置要求
 
-- Node.js 18+
-- pnpm
+- **Node.js 22+** 与 pnpm（`better-sqlite3` 要求 Node ≥ 22）
+- DeepSeek API Key（可选，仅 AI 功能需要）
 
-### 安装与测试
+### 安装
 
 ```bash
 # 1. 安装依赖
 pnpm install
 
-# 2. 运行全部测试
-pnpm test
+# 2. 配置环境变量 — 创建 .env.local
+DEEPSEEK_API_KEY=sk-xxxxxxxx
+# 可选：覆盖模型，默认 deepseek-flash（AI 对话与上下文压缩共用）
+# AI_MODEL=deepseek-flash
+# 说明：.env.local / .env 由服务端入口 server/load-env.ts 加载（tsx/node 不会自动读，
+#       启动日志会打印「已加载 env：…」；缺 key 时启动即打 ⚠️ 提示）。真实环境变量优先于文件。
 
-# 3. watch 模式
-pnpm test:watch
-
-# 4. 只跑手撕题库的用例
-npx vitest run test/interview/
+# 3. 启动（并行起 vite 5173 + Hono 3001；首个请求自动建库 data/lotion.db）
+pnpm dev
+# （dev 会先轮询 /api/health 就绪再启动 Vite，避免首屏 ECONNREFUSED）
 ```
 
-> 注：Day 1–8 的学习与力扣打卡已完成；Day 9 的 A/B1/B2/C 材料和本地靶子已就绪，学习任务仍待完成。C 轨 8 道题的本地源码仍是 TODO，保留作为复写练习，因此全量测试暂为红测；Day 8-9 缓存用例 18/18 通过。
+打开 [http://localhost:5173](http://localhost:5173)，注册账号即可使用。
 
-## 学习路线
+生产模式：`pnpm build && pnpm start` → 单进程同时提供 API 与静态资源（[http://localhost:3001](http://localhost:3001)）。
 
-- [x] **Day 1** —— 扁平数组 → 文档树（`buildTree`，O(n) 两遍扫描）
-- [x] **Day 2** —— 一次算出整棵子树（`collectSubtreeIds`，BFS + 防环）
-- [x] **Day 3** —— 文档提及解析（`extractMentions` / `truncateMentionTitle`）
-- [x] **Day 4** —— 认地图：三层结构 + 主链路 + 讲稿 v1；B1 事件循环；B2 Agent 全景与请求链路；C 手撕 01 `EventEmitter`
-- [x] **Day 5** —— 自己画架构图 + 主链路；B1 `async/await`；B2 LLM 基础（Token / 上下文 / 无状态 / 压缩）；C Hot 100 开篇（两数之和 / 字母异位词分组）
-- [x] **Day 6** —— 数据层取数；B1 闭包；B2 Agent 词汇 + Tool Calling；C 最长连续序列 / 移动零
-- [x] **Day 7** —— 全量建树 / 懒加载；B1 箭头函数与 this；B2 MCP 深入与 Skills；C 补打卡
-- [x] **Day 8** —— 请求去重 + LRU；B1 原型链与继承；B2 Agent Loop 与安全闸门；C 最长子串 / 接雨水
-- [ ] **Day 9** —— 缓存失效 / `fresh` / `prefetch`；B1 Map / WeakMap / 内存泄漏；B2 记忆与 RAG；C 字母异位词 / 和为 K 的子数组（🟡 材料就绪）
-- [ ] **Day 10-42** —— 逐块点亮（前端 → 实时协同 → AI 链路 → 权限/工程化），每阶段复盘时讲稿升一版
-- [ ] **Day 43-48** —— 模拟冲刺：5 场模拟面试 + 讲稿定稿
+### 配置有两层（env > data/settings.json > 组合默认）
 
-> 完整排期与每日任务见 `docs/00-学习计划.md`。
+```json
+{
+  "ai": { "model": "deepseek-chat" },
+  "server": { "port": 3100 },
+  "plugins": { "dynamic-plugins": { "disabled": false } },
+  "market": { "registryUrl": "", "requireSignature": false }
+}
+```
 
-## 参考
+- `ai` / `storage` / `server` / `logging`：改完 **无需重启** 即生效（AI 模型与 Key 每次请求解析）
+- `plugins`：**装配 patch**，按插件 id 覆盖配置或停用插件（清单见 `server/composition.ts`、`src/shell/ui-plugins.tsx`）
+- `market`：插件市场源与验签策略。`registryUrl` 也可用 `LOTION_MARKET_URL` 注入；
+  设置 `LOTION_MARKET_PUBLIC_KEY`（Ed25519 PEM）后启用远端签名校验
+- `dynamic-plugins` 是**默认关闭**的 opt-in 通道（让 AI 现场写插件并热挂载）。开启前请先读
+  [`docs/项目/插件化架构.md`](docs/项目/插件化架构.md) 的「安全姿态」表 —— 它**不是沙箱边界**（宿主半边与本机 shell 同级信任，客户端半边需人工审批）。
 
-- **Lotion** —— 全栈 AI 笔记应用（无限层级文档树 + BlockNote + DeepSeek Agent），本仓库的练习原型
-- Lotion 中对应实现：`lib/db.ts` 的 `getSidebarAll()` / `archive()` / `restore()`、`lib/mention.ts`、`lib/agent.ts`、`lib/compress.ts`、`document-list.tsx` 的递归树渲染
+架构总览、服务/接缝一览、以及「写一个插件要改哪些文件」见 [`docs/项目/插件化架构.md`](docs/项目/插件化架构.md) 附录 A。
+
+## 项目结构
+
+```
+src/
+├── main.tsx                      # 客户端入口
+├── app.tsx                       # 全局 Provider（Theme / Toaster / Modal / User）+ KernelProvider
+├── router.tsx                    # 路由表（导出 routes 供测试复用）
+├── kernel/                       # 客户端内核：client.ts 装配 / react.tsx（useDocStore / useSlot / useActor）
+├── dynamic/                      # 动态插件客户端半边（宿主关闭时空操作）
+├── pages/                        # marketing / login / register / documents / document / market / preview / 404 / error
+├── shell/                        # 认证区外壳
+│   ├── main-layout.tsx           # 会话守卫 + AppShell
+│   ├── app-shell.tsx             # DSH 风格三栏 shell（sidebar|center|details + 拖拽手柄）
+│   ├── ui-plugins.tsx            # 内置 UI 插件清单（AI 面板由插槽贡献）
+│   ├── sidebar/                  # 侧边栏：header 搜索胶囊 / 文档树 / footer / rail
+│   ├── ai-panel.tsx              # AI 面板（details 插槽常驻，SSE 流式渲染）
+│   ├── ai/                       # turn-reducer（事件→turn，纯逻辑，单测覆盖）/ note-card / session-menu
+│   │                             #   / tool-card / attachments（文本附件读取与校验）
+│   ├── editor.tsx                # BlockNote 入口（schema / 斜杠菜单 / @提及 / 图片上传）
+│   └── title.tsx / cover.tsx / navbar.tsx / publish.tsx / trash-box.tsx
+├── marketing/                    # 着陆页组件
+└── styles/                       # globals.css（Tailwind 4 设计 token）+ fonts.css
+server/
+├── index.ts                      # 入口：loadEnvFiles → bootHostKernel（装配审计）→ serve
+├── kernel.ts                     # 宿主内核装配（组合根）
+├── composition.ts                # 宿主组合清单（稳定 id + 用户层 patch）
+├── load-env.ts                   # .env.local / .env 加载（真实环境变量优先）
+├── app.ts                        # 实时分发：按请求查 httpRoutes 注册表装配 /api/*（可测试）
+├── middleware.ts                 # requireAuth（会话 cookie 校验）
+└── routes/                       # 路由插件清单 index.ts + auth / me / documents(+archive|move|restore)
+│                                 #   / chat/sessions / ai-chat(SSE) / ai-undo / upload + uploads / plugins / public-documents
+components/
+├── settings/                     # 设置弹窗插件页 / 配置弹窗 / 源码预览
+│                                 # 市场页组件（src/pages/market.tsx 承载）
+├── editor/                       # blocknote.css / lotion-suggestion-menu.tsx / outline-panel.tsx
+├── markdown/                     # AI 回复的流式 Markdown 渲染
+├── ui/ + icons/ + modals/ + upload/ + search-command.tsx
+hooks/                            # use-layout / use-user / use-refresh / ...
+lib/
+├── kernel/                       # ⚠️ 环境无关纯 TS：cordis.ts（唯一适配层）/ cordis-loader.ts
+├── seams/                        # 8 条接缝契约：doc-store / settings / http-routes / ui-slots / tools / remote / dynamic / plugins
+├── client/                       # ⚠️ 浏览器专用：doc-store-rest / remote-rest / plugin-admin-rest / plugin-boot
+├── dynamic/                      # ⚠️ 服务端专用：node:vm 沙箱 + plugin_* 自指工具（默认关闭）
+├── db.ts                         # 客户端数据访问入口（全部 fetch REST；UI 层走 docStore 接缝）
+├── local/                        # ⚠️ 服务端专用：sqlite / migrations / db / auth / request-user / uploads
+│                                 #   + plugin-catalog / plugin-manager / plugin-package / plugin-runtime
+│                                 #   + plugin-market / dynamic-store / static-plugin-controller
+├── content.ts                    # 客户端安全的内容适配（isBlockNoteJson / toEditorBlocks）
+├── content-server.ts             # ⚠️ 服务端专用：JSON ↔ Markdown（@blocknote/server-util）
+├── blocknote-schema.ts           # 自定义 schema（callout / mention），客户端服务端共享
+├── agent.ts                      # Agent 核心：streamText + doom loop + 回合快照 + 改动前快照（撤销）
+├── ai/tools/                     # 19 个 Agent Tool + registry.ts（注册表/守卫）+ blocks-util.ts
+├── ai/runtime-config.ts          # 每次请求解析模型/Key（走配置层）
+├── chat-snapshot.ts              # 回合快照类型与宽容解析（客户端/服务端共享）
+├── tool-meta.ts                  # 工具标签/图标单一真相源（客户端也导入）
+├── ai-prompts.ts / compress.ts / logger.ts
+└── layout/columns.ts             # 三栏让步链纯函数（常量 + computeColumns）
+public/plugin-market/             # 本地市场 registry + 示例 bundle
+templates/plugin/                 # 第三方插件最小模板
+docs/                             # 学习资料 / 项目文档 / 面试准备（见 docs/README.md）
+test/                             # Vitest 单测（与 lib/、server/ 同构，728 个用例）
+```
+
+## 数据模型（SQLite 6 张表）
+
+`users` / `sessions` / `documents` / `chat_sessions` / `chat_messages` / `ai_changes`，每次启动自动迁移（`lib/local/migrations.ts` 内嵌 DDL + `_migrations` 记录表，当前 4 个迁移）。
+
+- `chat_messages.metadata`：assistant 消息的**回合快照**（工具卡/副作用卡/引用/待办/提问/警告/耗时/requestId）与 user 消息的**附件清单**
+- `chat_sessions.documentId`：会话绑定的文档（可空 = 全局会话；文档删除时置空）
+- `ai_changes`：每轮 AI 写入前的文档快照（按 `requestId` 分组，撤销的原料）
+
+`documents` 表（应用层显式 `userId` 过滤，无 RLS；`userId` / `parentDocument` 上建索引）：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `id` | TEXT PK | 应用层 `crypto.randomUUID()` |
+| `userId` | TEXT FK | 所有者 |
+| `title` | TEXT | 标题 |
+| `isArchived` | INTEGER | 软删除标记（0/1） |
+| `isDraft` | INTEGER | AI 创建草稿，需确认 |
+| `parentDocument` | TEXT FK | 父文档（自引用嵌套，`ON DELETE SET NULL`） |
+| `content` | TEXT | BlockNote JSON 块 |
+| `coverImage` / `icon` | TEXT | 封面图 / Emoji 图标 |
+| `isPublished` | INTEGER | 是否公开 |
+| `createdAt` / `updatedAt` | TEXT | ISO 8601（应用层显式更新） |
+
+## 开发
+
+```bash
+pnpm dev          # 等 API /api/health 就绪后起 vite(5173) + Hono(3001)，/api 代理到 Hono
+pnpm build        # vite 构建客户端到 dist/
+pnpm start        # 运行 Hono（托管 dist/ + API，单机自托管）
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # ESLint
+pnpm test         # Vitest 单测（728 个用例，内存 SQLite + Hono app.request）
+pnpm test:watch   # Vitest 监听模式
+```
+
+约定：后台代码（`lib/`、`server/`）每次修改必须补或更新单测，提交前 `pnpm test` 必须全绿；提交消息格式 `feature: <中文描述>` / `fix: <中文描述>`。
+
+## 部署
+
+单机自托管：`pnpm build && pnpm start`。数据落在 `data/lotion.db`（可用 `LOTION_DB_PATH` 覆盖）与 `data/uploads/`（可用 `UPLOAD_DIR` 覆盖）。
+
+> ⚠️ TODO（代码内已注释）：图床迁移（`server/routes/upload.ts`，`{ url }` 契约不变）；公网部署时 SQLite 文件需迁远程 libsql，并重新评估公开面（`server/routes/public-documents.ts`）。
+
+## License
+
+MIT

@@ -1,0 +1,250 @@
+// POST /api/ai/chat —— AI 笔记助手 SSE 流端点
+// 鉴权：本地会话 cookie → requireAuth 中间件
+// 数据：直接使用本地 SQLite 层（lib/local/db.ts），无 RLS，userId 全程显式过滤
+import { Hono } from "hono";
+import { getDb } from "@/lib/local/sqlite";
+import { runNoteAgent, type AgentHistoryMessage } from "@/lib/agent";
+import {
+  getChatSession,
+  getDocumentById,
+  insertAiChange,
+  listChatHistory,
+  insertChatMessage,
+  setChatSessionTitle,
+  touchChatSession,
+} from "@/lib/local/db";
+import { maybeCompressSession, WINDOW_SIZE } from "@/lib/compress";
+import { logger } from "@/lib/logger";
+import { readJson, type AppEnv } from "../http";
+import { requireAuth } from "../middleware";
+import { getHostAiConfig, getHostKernelIfBooted, getHostTools } from "../kernel";
+
+/**
+ * 请求幂等：靠 chat_messages(userId, requestId) 唯一约束（本地版 DDL 同款），
+ * 重复 requestId 落库时触发 SQLITE_CONSTRAINT_UNIQUE → 409。
+ */
+/** 附件上限：最多 3 个、单个 20k 字符（文本类：.md/.txt/.json/.csv 等） */
+export const ATTACHMENT_MAX_COUNT = 3;
+export const ATTACHMENT_MAX_CHARS = 20_000;
+
+export interface ChatAttachment {
+  name: string;
+  content: string;
+}
+
+/**
+ * 校验并规范化附件（纯函数，便于单测）：
+ * 非法项被丢弃而不是整条请求失败 —— 附件只是上下文，不该阻断对话。
+ */
+export function normalizeAttachments(input: unknown): ChatAttachment[] {
+  if (!Array.isArray(input)) return [];
+  const out: ChatAttachment[] = [];
+  for (const item of input) {
+    if (typeof item !== "object" || item === null) continue;
+    const name = (item as { name?: unknown }).name;
+    const content = (item as { content?: unknown }).content;
+    if (typeof name !== "string" || typeof content !== "string") continue;
+    const trimmedName = name.trim().slice(0, 120) || "附件";
+    if (!content.trim()) continue;
+    out.push({ name: trimmedName, content: content.slice(0, ATTACHMENT_MAX_CHARS) });
+    if (out.length >= ATTACHMENT_MAX_COUNT) break;
+  }
+  return out;
+}
+
+/** 把附件拼进本轮 prompt（只影响本次请求；库里仍存用户原话） */
+export function withAttachments(prompt: string, attachments: ChatAttachment[]): string {
+  if (attachments.length === 0) return prompt;
+  const blocks = attachments.map(
+    (a) => `### 附件：${a.name}\n${a.content}`,
+  );
+  return `${prompt}\n\n---\n以下是用户随消息提供的文件内容（供参考，可能不完整）：\n\n${blocks.join("\n\n")}`;
+}
+
+/**
+ * 该轮要不要落库 assistant 消息（纯函数，便于单测）：
+ * - 有正文 → 落库（含"停止生成"时已生成的部分内容）
+ * - 没有正文但有结构化内容（工具卡/引用/待办/提问/警告）→ 落库，刷新后仍能看到这一轮做了什么
+ * - 两者都没有（首 token 之前就被中断 / 直接失败）→ **不落库**：
+ *   否则历史里会躺一条空回答（模型下一轮还会看到一个空的 assistant 消息）
+ */
+export function shouldPersistAssistantMessage(result: {
+  text: string;
+  snapshot: {
+    tools: unknown[];
+    notes: unknown[];
+    references: unknown[];
+    questions: unknown[];
+    todos: unknown[];
+    warnings: unknown[];
+  };
+}): boolean {
+  if (result.text.trim().length > 0) return true;
+  const { tools, notes, references, questions, todos, warnings } = result.snapshot;
+  return (
+    tools.length + notes.length + references.length + questions.length + todos.length + warnings.length >
+    0
+  );
+}
+
+function isUniqueViolation(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    (e as { code?: string }).code === "SQLITE_CONSTRAINT_UNIQUE"
+  );
+}
+
+export const aiChatRoutes = new Hono<AppEnv>();
+
+aiChatRoutes.use("*", requireAuth);
+
+aiChatRoutes.post("/", async (c) => {
+  const user = c.get("user");
+
+  const parsed = await readJson<{
+    prompt?: string;
+    sessionId?: string;
+    requestId?: string;
+    documentId?: string;
+    attachments?: unknown;
+  }>(c);
+  if (!parsed.ok) return c.json({ error: "请求体不是合法 JSON" }, 400);
+  const { prompt, sessionId, requestId, documentId } = parsed.data;
+  const attachments = normalizeAttachments(parsed.data.attachments);
+  if (!prompt || !sessionId) return c.json({ error: "prompt 与 sessionId 必填" }, 400);
+  logger.api.info("收到 AI 请求", { userId: user.id, promptLen: prompt.length, sessionId });
+
+  // 会话归属校验（无 RLS 兜底，这里显式检查给出清晰错误）
+  const db = getDb();
+  const session = getChatSession(db, user.id, sessionId);
+  if (!session) return c.json({ error: "Session not found" }, 404);
+
+  // 首个问题自动命名会话，其余仅刷新 updatedAt（失败不阻塞主流程）
+  try {
+    if (session.title === "新对话") {
+      setChatSessionTitle(db, user.id, sessionId, prompt.slice(0, 20));
+    } else {
+      touchChatSession(db, user.id, sessionId);
+    }
+  } catch (e) {
+    logger.api.error("会话更新失败", { error: String(e) });
+  }
+
+  // 先拉历史、后落库本轮用户消息：否则刚插入的 prompt 会既出现在 history 里、
+  // 又作为 prompt 注入一次 —— 模型会看到两遍同一句话。
+  // 滑动窗口：早期对话已压缩为 summary，注入最近 WINDOW_SIZE 条原文，其余靠摘要承载（lib/compress.ts）
+  let history: AgentHistoryMessage[] = [];
+  try {
+    const msgs = listChatHistory(db, user.id, sessionId, WINDOW_SIZE, { uncompressedOnly: true });
+    history = msgs.map((m) => ({ role: m.role, content: m.content }));
+    logger.api.info("注入对话历史", { count: history.length, hasSummary: !!session.summary });
+  } catch (e) {
+    logger.api.warn("拉取对话历史失败，本次无上下文", { error: String(e) });
+  }
+
+  // 落库用户消息（携带 requestId 作幂等键；冲突=重复请求直接拒绝）。其他失败不阻塞主流程。
+  // 位置在拉历史之后：历史里不应包含本轮 prompt（见上）。
+  try {
+    insertChatMessage(db, {
+      userId: user.id,
+      sessionId,
+      role: "user",
+      content: prompt,
+      requestId: requestId || undefined,
+      // 附件只存清单（名称/字符数）：正文是当轮上下文，不落库，避免历史里反复灌入大文件
+      metadata:
+        attachments.length > 0
+          ? JSON.stringify({
+              attachments: attachments.map((a) => ({ name: a.name, size: a.content.length })),
+            })
+          : undefined,
+    });
+  } catch (e) {
+    if (isUniqueViolation(e)) {
+      logger.api.warn("重复请求已拒绝", { requestId });
+      return c.json({ error: "Duplicate request" }, 409);
+    }
+    logger.api.error("用户消息落库失败", { error: String(e) });
+  }
+
+  // AI 运行期配置来自配置层（env > data/settings.json > 组合默认）；内核未装配时回退环境变量。
+  // 每次请求都解析：改模型/key 后**无需重启**即可生效。
+  const ai = getHostAiConfig();
+
+  // 当前文档上下文：显式按 userId 校验归属（无 RLS 兜底），拿不到就静默降级为无上下文，
+  // 绝不让别的用户的文档标题/id 进 system 提示
+  let currentDocument: { id: string; title: string } | undefined;
+  if (documentId) {
+    try {
+      const doc = getDocumentById(db, documentId, user.id);
+      if (doc) currentDocument = { id: doc.id, title: doc.title };
+    } catch (e) {
+      logger.api.warn("当前文档上下文读取失败，忽略", { error: String(e) });
+    }
+  }
+
+  // 附件拼进本轮 prompt（库里仍存原话；历史回放时用附件清单渲染 chip）
+  const effectivePrompt = withAttachments(prompt, attachments);
+
+  const { stream, done } = await runNoteAgent(db, user.id, effectivePrompt, {
+    history,
+    summary: session.summary || undefined,
+    signal: c.req.raw.signal, // 前端 abort fetch 时中断 DeepSeek 生成
+    ai,
+    currentDocument,
+    // 工具注册表来自内核：插件注册的工具自动对模型可见；未装配内核时回退内置注册表
+    tools: getHostKernelIfBooted() ? getHostTools() : undefined,
+    context: getHostKernelIfBooted()?.ctx,
+  });
+
+  // 流结束后后台落库 assistant 消息（含 token 统计与结构化快照），随后触发上下文压缩检查
+  const finish = done
+    .then((result) => {
+      // 改动的"改动前快照"落库（撤销用）：按 requestId 分组；没有 requestId 就无法撤销，跳过
+      const changes = result.changes ?? [];
+      if (requestId && changes.length > 0) {
+        for (const change of changes) {
+          insertAiChange(db, {
+            userId: user.id,
+            requestId,
+            documentId: change.documentId,
+            beforeState: JSON.stringify(change.before),
+          });
+        }
+      }
+      return result;
+    })
+    .then((result) => {
+      if (!shouldPersistAssistantMessage(result)) {
+        logger.api.info("本轮无可落库内容（中断在首 token 前或直接失败），跳过 assistant 消息", {
+          sessionId,
+          aborted: result.aborted,
+        });
+        return result;
+      }
+      return insertChatMessage(db, {
+        userId: user.id,
+        sessionId,
+        role: "assistant",
+        content: result.text,
+        promptTokens: result.usage?.inputTokens ?? 0,
+        completionTokens: result.usage?.outputTokens ?? 0,
+        totalTokens: (result.usage?.inputTokens ?? 0) + (result.usage?.outputTokens ?? 0),
+        // 快照让刷新/切会话后的时间线仍然有工具卡、副作用卡、引用、待确认操作，
+        // 并带上 requestId（撤销按钮的入参）
+        metadata: JSON.stringify({ ...result.snapshot, requestId: requestId ?? null }),
+      });
+    })
+    .then(() => maybeCompressSession(user.id, sessionId, ai ? { ai } : undefined))
+    .catch((e) => {
+      logger.api.error("assistant 消息落库失败", { error: String(e) });
+    });
+  void finish;
+
+  return c.newResponse(stream, 200, {
+    "Content-Type": "text/event-stream; charset=utf-8",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+});

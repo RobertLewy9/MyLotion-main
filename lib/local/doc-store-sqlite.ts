@@ -1,0 +1,169 @@
+// docStore 的宿主侧实现（Service Provider）：SQLite。
+//
+// ⚠️ 服务端专用（better-sqlite3 是原生模块，进客户端打包会炸 —— 由 test/boundary.test.ts 守卫）。
+// 本文件只做**转发与 Actor 绑定**：所有 SQL 语义仍由 lib/local/db.ts 持有，
+// 换实现（libsql / 远程）时替换本文件即可，消费方与契约都不用动。
+import type Database from "better-sqlite3";
+import { z } from "zod";
+import type { PluginObject } from "@/lib/kernel";
+import { getDb } from "./sqlite";
+import { appendMarkdownToDocument } from "@/lib/content-server";
+import {
+  archiveDocument,
+  clearDocumentCoverImage,
+  clearDocumentIcon,
+  createChatSession,
+  createDocument,
+  deleteChatSession,
+  deleteDocument,
+  getDocumentById,
+  insertChatMessage,
+  listChatHistory,
+  listChatSessions,
+  previewAiChanges,
+  undoAiChanges,
+  listDocumentsOverview,
+  listSearch,
+  listSidebar,
+  listSidebarAll,
+  listTrash,
+  moveDocument,
+  restoreDocument,
+  setChatSessionTitle,
+  touchChatSession,
+  updateDocument,
+} from "./db";
+import type {
+  Actor,
+  ChatMessageInput,
+  DocStore,
+  DocumentUpdateFields,
+} from "@/lib/seams/doc-store";
+import { provideDocStore } from "@/lib/seams/doc-store";
+
+/**
+ * 用给定连接构造 docStore 实现（测试可注入 :memory: 库）。
+ * @param db - SQLite 连接；省略时用进程单例（getDb）
+ */
+export function createSqliteDocStore(db?: Database.Database): DocStore {
+  const conn = () => db ?? getDb();
+
+  return {
+    // ---- 文档读取 ----
+    async listSidebarAll(actor: Actor) {
+      return listSidebarAll(conn(), actor.userId);
+    },
+    async listSidebar(actor: Actor, parentDocument: string | null) {
+      return listSidebar(conn(), actor.userId, parentDocument);
+    },
+    async listTrash(actor: Actor) {
+      return listTrash(conn(), actor.userId);
+    },
+    async listSearch(actor: Actor) {
+      return listSearch(conn(), actor.userId);
+    },
+    async getById(actor: Actor, id: string) {
+      return getDocumentById(conn(), id, actor.userId);
+    },
+    async getPublishedById(id: string) {
+      const doc = getDocumentById(conn(), id);
+      return doc && doc.isPublished ? doc : null;
+    },
+    async listOverview(actor: Actor, parentDocument: string | null) {
+      return listDocumentsOverview(conn(), actor.userId, parentDocument);
+    },
+
+    // ---- 文档写入 ----
+    // ⚠️ 无 RLS：每个写方法都必须把 actor.userId 透传到底层 SQL（WHERE ... AND userId = ?）。
+    // 曾经这里是 `_actor`（丢弃）→ update/remove/removeIcon/removeCoverImage 变成横向越权入口。
+    async create(actor: Actor, title: string, parentDocument: string | null = null) {
+      return createDocument(conn(), actor.userId, title, parentDocument);
+    },
+    async update(actor: Actor, id: string, fields: DocumentUpdateFields) {
+      updateDocument(conn(), actor.userId, id, fields);
+    },
+    async appendMarkdown(actor: Actor, id: string, markdown: string) {
+      // 归属校验：无 RLS，必须显式带 userId
+      const doc = getDocumentById(conn(), id, actor.userId);
+      if (!doc) throw new Error("文档不存在或无权访问");
+      const content = await appendMarkdownToDocument(doc.content, markdown);
+      updateDocument(conn(), actor.userId, id, { content });
+    },
+    async archive(actor: Actor, id: string) {
+      archiveDocument(conn(), actor.userId, id);
+    },
+    async restore(actor: Actor, id: string) {
+      restoreDocument(conn(), actor.userId, id);
+    },
+    async move(actor: Actor, id: string, parentDocument: string | null) {
+      moveDocument(conn(), actor.userId, id, parentDocument);
+    },
+    async remove(actor: Actor, id: string) {
+      deleteDocument(conn(), actor.userId, id);
+    },
+    async removeIcon(actor: Actor, id: string) {
+      clearDocumentIcon(conn(), actor.userId, id);
+    },
+    async removeCoverImage(actor: Actor, id: string) {
+      clearDocumentCoverImage(conn(), actor.userId, id);
+    },
+
+    // ---- AI 会话 ----
+    async undoAiChanges(actor: Actor, requestId: string) {
+      return undoAiChanges(conn(), actor.userId, requestId);
+    },
+    async previewAiChanges(actor: Actor, requestId: string) {
+      return previewAiChanges(conn(), actor.userId, requestId);
+    },
+    async listChatSessions(actor: Actor, limit?: number) {
+      return listChatSessions(conn(), actor.userId, limit);
+    },
+    async createChatSession(actor: Actor, title?: string, documentId?: string | null) {
+      // 归属校验：只能绑定自己的文档
+      const bound =
+        documentId && getDocumentById(conn(), documentId, actor.userId) ? documentId : null;
+      return createChatSession(conn(), actor.userId, title, bound);
+    },
+    async deleteChatSession(actor: Actor, sessionId: string) {
+      deleteChatSession(conn(), actor.userId, sessionId);
+    },
+    async listChatHistory(actor: Actor, sessionId: string, limit?: number) {
+      return listChatHistory(conn(), actor.userId, sessionId, limit);
+    },
+    async insertChatMessage(actor: Actor, input: ChatMessageInput) {
+      insertChatMessage(conn(), { ...input, userId: actor.userId });
+    },
+    async setChatSessionTitle(actor: Actor, sessionId: string, title: string) {
+      setChatSessionTitle(conn(), actor.userId, sessionId, title);
+    },
+    async touchChatSession(actor: Actor, sessionId: string) {
+      touchChatSession(conn(), actor.userId, sessionId);
+    },
+  };
+}
+
+/**
+ * 插件配置的 Standard Schema：`db` 必须是"看起来像 better-sqlite3 连接"的对象
+ * （有 prepare 方法）。Cordis 在启动前校验，配错了不会拖到第一次查询才炸。
+ */
+export const sqliteDocStoreConfig = z.object({
+  db: z
+    .custom<Database.Database>(
+      (value) => typeof (value as { prepare?: unknown } | undefined)?.prepare === "function",
+      "需要一个 better-sqlite3 连接（含 prepare 方法）",
+    )
+    .optional(),
+});
+
+/**
+ * 装配插件：把 SQLite 版 docStore 挂到内核上（组合清单里的一行）。
+ * config.db 可注入测试库（:memory:）；不传则用进程单例连接（getDb）。
+ */
+export const sqliteDocStorePlugin: PluginObject = {
+  name: "doc-store-sqlite",
+  Config: sqliteDocStoreConfig,
+  apply(ctx, config?: unknown) {
+    const { db } = sqliteDocStoreConfig.parse(config ?? {});
+    provideDocStore(ctx, createSqliteDocStore(db));
+  },
+};
