@@ -1,10 +1,10 @@
-# Lotion — AI 笔记（本地单机版）
+# MyLotion — AI 笔记（本地单机版）
 
 <p align="center">
-  <img src="./assets/readme/hero.svg?v=3" width="100%" alt="Lotion：全栈 AI 笔记应用——DSH 风格三栏布局、无限层级文档树、BlockNote 富文本编辑，DeepSeek Agent 通过 SSE 事件流实时管理笔记">
+  <img src="./assets/readme/hero.svg?v=3" width="100%" alt="MyLotion：全栈 AI 笔记应用——DSH 风格三栏布局、无限层级文档树、BlockNote 富文本编辑，DeepSeek Agent 通过 SSE 事件流实时管理笔记">
 </p>
 
-> `feature/vite-hono` 是仓库唯一分支兼默认分支，即本地单机版：SQLite 本地数据库 + 自研 Auth + REST API。前身 Supabase 网络数据库版（Next.js）已归档为 tag `archive/supabase-main`，仅作只读历史基线。详见 [docs/项目/本地数据库版.md](docs/项目/本地数据库版.md)。
+> `main` 是仓库唯一分支兼默认分支，即本地单机版：SQLite 本地数据库 + 自研 Auth + REST API。前身 Supabase 网络数据库版（Next.js）已归档为 tag `archive/supabase-main`，仅作只读历史基线。详见 [docs/项目/本地数据库版.md](docs/项目/本地数据库版.md)。
 >
 > 架构是**插件化**的（内核 + 8 条接缝 + 内置插件）：内核用 `@deepseek-ai/cordis`，全仓库只有 `lib/kernel/cordis.ts` 一处 import 它。见 [docs/项目/插件化架构.md](docs/项目/插件化架构.md)，第三方插件格式见 [docs/项目/插件开发.md](docs/项目/插件开发.md)。
 
@@ -76,7 +76,7 @@
   安装确认框列出 capabilities（tools / httpRoutes / ui）
 - **AI 动态插件** — 模型用 `plugin_*` 工具现场定义；定义持久化到 `data/plugins/dynamic/`，
   重启后仍在但运行状态不自动恢复；客户端半边在设置页审批后下发
-- **安全姿态（如实）** — `node:vm` / 浏览器 `new Function` **不是安全边界**，插件与 Lotion 进程同信任级别；
+- **安全姿态（如实）** — `node:vm` / 浏览器 `new Function` **不是安全边界**，插件与 MyLotion 进程同信任级别；
   默认关闭动态通道，安装不自动启用，客户端半边必须人工批准
 
 ## 它如何工作
@@ -226,7 +226,7 @@ lib/
 └── layout/columns.ts             # 三栏让步链纯函数（常量 + computeColumns）
 public/plugin-market/             # 本地市场 registry + 示例 bundle
 templates/plugin/                 # 第三方插件最小模板
-docs/                             # 学习资料 / 项目文档 / 面试准备（见 docs/README.md）
+docs/                             # 项目文档随仓库；学习/面试资料本地保留（见 docs/README.md）
 test/                             # Vitest 单测（与 lib/、server/ 同构，728 个用例）
 ```
 
