@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      width="1200" height="420" viewBox="0 0 1200 420"
      role="img" aria-labelledby="title desc">
-  <title id="title">Lotion — AI-Powered Notes</title>
+  <title id="title">MyLotion — AI-Powered Notes</title>
   <desc id="desc">全栈 AI 笔记应用：无限层级文档树、BlockNote 富文本编辑器，右侧窗口展示 DeepSeek AI Agent 的 SSE 事件流（note_created / references）。</desc>
 
   <defs>
@@ -19,7 +19,7 @@
     <text x="0" y="88" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
           font-size="16" letter-spacing="2.5" fill="#4D6BFE">AI-POWERED NOTES · DEEPSEEK AGENT</text>
     <text x="0" y="158" font-family="-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, sans-serif"
-          font-size="72" font-weight="800" fill="#1C1B18">Lotion</text>
+          font-size="72" font-weight="800" fill="#1C1B18">MyLotion</text>
     <text x="0" y="206" font-family="-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, sans-serif"
           font-size="20" font-weight="600" fill="#1C1B18">无限层级文档树 · BlockNote 富文本编辑</text>
     <text x="0" y="236" font-family="-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, sans-serif"
@@ -54,7 +54,7 @@
     <circle cx="784" cy="86" r="5" fill="#28C840"/>
     <text x="930" y="91" text-anchor="middle"
           font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
-          font-size="13" fill="#9A968C">UNTITLED — LOTION</text>
+          font-size="13" fill="#9A968C">UNTITLED — MYLOTION</text>
 
     <!-- document body -->
     <rect x="748" y="116" width="44" height="44" rx="10" fill="#EEF0FF"/>

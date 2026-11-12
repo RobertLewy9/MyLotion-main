@@ -1,7 +1,7 @@
 # MyLotion — AI 笔记（本地单机版）
 
 <p align="center">
-  <img src="./assets/readme/hero.svg?v=3" width="100%" alt="MyLotion：全栈 AI 笔记应用——DSH 风格三栏布局、无限层级文档树、BlockNote 富文本编辑，DeepSeek Agent 通过 SSE 事件流实时管理笔记">
+  <img src="./assets/readme/hero.svg?v=4" width="100%" alt="MyLotion：全栈 AI 笔记应用——DSH 风格三栏布局、无限层级文档树、BlockNote 富文本编辑，DeepSeek Agent 通过 SSE 事件流实时管理笔记">
 </p>
 
 > `main` 是仓库唯一分支兼默认分支，即本地单机版：SQLite 本地数据库 + 自研 Auth + REST API。前身 Supabase 网络数据库版（Next.js）已归档为 tag `archive/supabase-main`，仅作只读历史基线。详见 [docs/项目/本地数据库版.md](docs/项目/本地数据库版.md)。
