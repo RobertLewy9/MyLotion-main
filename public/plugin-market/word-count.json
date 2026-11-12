@@ -3,7 +3,7 @@
   "name": "字数统计",
   "version": "1.0.0",
   "description": "给 AI 增加一个统计字数的工具，演示只贡献宿主 tools 的插件。",
-  "author": "lotion",
+  "author": "mylotion",
   "capabilities": [
     "tools"
   ],

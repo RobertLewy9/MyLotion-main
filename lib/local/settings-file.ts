@@ -18,9 +18,9 @@ import {
   type SettingsSectionOptions,
 } from "@/lib/seams/settings";
 
-/** 用户层配置文件路径（可用 LOTION_SETTINGS_PATH 覆盖，测试注入用） */
+/** 用户层配置文件路径（可用 MYLOTION_SETTINGS_PATH 覆盖，测试注入用） */
 export function resolveSettingsPath(): string {
-  return process.env.LOTION_SETTINGS_PATH ?? path.join(process.cwd(), "data", "settings.json");
+  return process.env.MYLOTION_SETTINGS_PATH ?? path.join(process.cwd(), "data", "settings.json");
 }
 
 interface Registration {

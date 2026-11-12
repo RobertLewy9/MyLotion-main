@@ -1,5 +1,5 @@
 // 对齐 DSH（deepseek-harness packages/client/ui-primitives/src/markdown/parse.ts）：
-// mdast 语法——GFM + CJK 友好加粗。Lotion 不渲染数学公式，故不引入 math 扩展
+// mdast 语法——GFM + CJK 友好加粗。MyLotion 不渲染数学公式，故不引入 math 扩展
 // （DSH 的 settled 语法是 streaming 语法加 math；此处两臂同一语法，天然一致）。
 
 import type { Root } from "mdast";

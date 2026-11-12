@@ -1,7 +1,7 @@
 "use client";
 
 // 对齐 DSH（deepseek-harness ui-primitives CodeBlock.tsx）的围栏代码块：
-// 语言横幅 + 复制按钮。Lotion 不引入 shiki 高亮——代码按等宽字体原样展示
+// 语言横幅 + 复制按钮。MyLotion 不引入 shiki 高亮——代码按等宽字体原样展示
 // （DSH 的高亮落地发生在 settled 渲染；此处两臂同为纯文本，行为一致）。
 
 import { useCallback, useRef, useState } from "react";

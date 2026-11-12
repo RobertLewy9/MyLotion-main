@@ -190,7 +190,7 @@ describe("动态插件端点与 /api/me", () => {
   });
 
   it("市场安装 → 审批 → 启用 → 客户端半边下发", async () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-installed-api-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-installed-api-"));
     try {
       const publicDir = path.join(dir, "public");
       const marketDir = path.join(publicDir, "plugin-market");

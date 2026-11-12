@@ -64,7 +64,7 @@
   安装 ≠ 启用 ≠ 批准，客户端半边必须人工审批；市场卡片直接提供「启用 → 批准 → 刷新页面」
 - **搜索 / 分类 / 排序** — 市场页支持关键词（名称/描述/标签/作者）、分类筛选与
   推荐/下载量/评分/最近更新/名称排序
-- **远端在线 registry** — 市场页可填 HTTPS registry URL（`LOTION_MARKET_URL` 也可），
+- **远端在线 registry** — 市场页可填 HTTPS registry URL（`MYLOTION_MARKET_URL` 也可），
   远端失败自动回退本地；30s 缓存避免重复请求
 - **上传 / 发布 / 导出** — 市场页上传 `plugin.json`；已安装插件可导出包或发布到本地市场
   （写入 `data/plugin-market/`，选择目录里不写代码）
@@ -72,7 +72,7 @@
   客户端代码变化会重置审批，要求重新批准
 - **评分 / 评论 / 下载量** — 本地统计落 `data/plugin-market/stats.json`，与 registry 基线合并展示
 - **完整性 / 签名 / 权限声明** — bundle 计算 sha256；registry 提供 sha256 时校验；
-  配置 `LOTION_MARKET_PUBLIC_KEY` 后支持 Ed25519 验签，`requireSignature` 可强制；
+  配置 `MYLOTION_MARKET_PUBLIC_KEY` 后支持 Ed25519 验签，`requireSignature` 可强制；
   安装确认框列出 capabilities（tools / httpRoutes / ui）
 - **AI 动态插件** — 模型用 `plugin_*` 工具现场定义；定义持久化到 `data/plugins/dynamic/`，
   重启后仍在但运行状态不自动恢复；客户端半边在设置页审批后下发
@@ -138,7 +138,7 @@ DEEPSEEK_API_KEY=sk-xxxxxxxx
 # 说明：.env.local / .env 由服务端入口 server/load-env.ts 加载（tsx/node 不会自动读，
 #       启动日志会打印「已加载 env：…」；缺 key 时启动即打 ⚠️ 提示）。真实环境变量优先于文件。
 
-# 3. 启动（并行起 vite 5173 + Hono 3001；首个请求自动建库 data/lotion.db）
+# 3. 启动（并行起 vite 5173 + Hono 3001；首个请求自动建库 data/mylotion.db）
 pnpm dev
 # （dev 会先轮询 /api/health 就绪再启动 Vite，避免首屏 ECONNREFUSED）
 ```
@@ -160,8 +160,8 @@ pnpm dev
 
 - `ai` / `storage` / `server` / `logging`：改完 **无需重启** 即生效（AI 模型与 Key 每次请求解析）
 - `plugins`：**装配 patch**，按插件 id 覆盖配置或停用插件（清单见 `server/composition.ts`、`src/shell/ui-plugins.tsx`）
-- `market`：插件市场源与验签策略。`registryUrl` 也可用 `LOTION_MARKET_URL` 注入；
-  设置 `LOTION_MARKET_PUBLIC_KEY`（Ed25519 PEM）后启用远端签名校验
+- `market`：插件市场源与验签策略。`registryUrl` 也可用 `MYLOTION_MARKET_URL` 注入；
+  设置 `MYLOTION_MARKET_PUBLIC_KEY`（Ed25519 PEM）后启用远端签名校验
 - `dynamic-plugins` 是**默认关闭**的 opt-in 通道（让 AI 现场写插件并热挂载）。开启前请先读
   [`docs/项目/插件化架构.md`](docs/项目/插件化架构.md) 的「安全姿态」表 —— 它**不是沙箱边界**（宿主半边与本机 shell 同级信任，客户端半边需人工审批）。
 
@@ -201,7 +201,7 @@ server/
 components/
 ├── settings/                     # 设置弹窗插件页 / 配置弹窗 / 源码预览
 │                                 # 市场页组件（src/pages/market.tsx 承载）
-├── editor/                       # blocknote.css / lotion-suggestion-menu.tsx / outline-panel.tsx
+├── editor/                       # blocknote.css / mylotion-suggestion-menu.tsx / outline-panel.tsx
 ├── markdown/                     # AI 回复的流式 Markdown 渲染
 ├── ui/ + icons/ + modals/ + upload/ + search-command.tsx
 hooks/                            # use-layout / use-user / use-refresh / ...
@@ -269,7 +269,7 @@ pnpm test:watch   # Vitest 监听模式
 
 ## 部署
 
-单机自托管：`pnpm build && pnpm start`。数据落在 `data/lotion.db`（可用 `LOTION_DB_PATH` 覆盖）与 `data/uploads/`（可用 `UPLOAD_DIR` 覆盖）。
+单机自托管：`pnpm build && pnpm start`。数据落在 `data/mylotion.db`（可用 `MYLOTION_DB_PATH` 覆盖）与 `data/uploads/`（可用 `UPLOAD_DIR` 覆盖）。
 
 > ⚠️ TODO（代码内已注释）：图床迁移（`server/routes/upload.ts`，`{ url }` 契约不变）；公网部署时 SQLite 文件需迁远程 libsql，并重新评估公开面（`server/routes/public-documents.ts`）。
 

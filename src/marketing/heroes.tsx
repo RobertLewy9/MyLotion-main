@@ -25,7 +25,7 @@ const Heroes = () => {
                     <span className="h-[10px] w-[10px] rounded-full bg-ai/75" />
                     <span className="h-[10px] w-[10px] rounded-full bg-chart-2/75" />
                     <span className="ml-2 truncate text-[12px] font-medium text-shell-label-secondary">
-                        Q3 Product Roadmap — Lotion
+                        Q3 Product Roadmap — MyLotion
                     </span>
                     <span className="ml-auto hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary sm:inline-flex">
                         <Sparkles className="h-3 w-3" strokeWidth={2} />
@@ -44,7 +44,7 @@ const Heroes = () => {
                         </div>
                         <p className="text-[13px] leading-[1.7] text-muted-foreground">
                             A three-month plan to bring the AI assistant to every
-                            note in Lotion.
+                            note in MyLotion.
                         </p>
                         <ul className="mt-4 space-y-2">
                             {roadmap.map((item) => (

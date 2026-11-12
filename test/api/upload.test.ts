@@ -40,7 +40,7 @@ beforeEach(async () => {
   initDatabase(db);
   state.db = db;
 
-  uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-upload-"));
+  uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-upload-"));
   process.env.UPLOAD_DIR = uploadDir;
 
   ({ app } = await createApiTestApp());

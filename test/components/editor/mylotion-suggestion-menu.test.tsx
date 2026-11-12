@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-// LotionSuggestionMenu 渲染单测：分组标签、图标/标题/快捷键、选中态高亮。
+// MyLotionSuggestionMenu 渲染单测：分组标签、图标/标题/快捷键、选中态高亮。
 import { describe, expect, it } from "vitest";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
 import type { DefaultReactSuggestionItem } from "@blocknote/react";
-import LotionSuggestionMenu from "@/components/editor/lotion-suggestion-menu";
+import MyLotionSuggestionMenu from "@/components/editor/mylotion-suggestion-menu";
 
 const ITEMS: DefaultReactSuggestionItem[] = [
   { title: "Callout", subtext: "提示框", group: "基础", icon: <span>💡</span>, onItemClick: () => {} },
@@ -12,13 +12,13 @@ const ITEMS: DefaultReactSuggestionItem[] = [
   { title: "Image", group: "媒体", onItemClick: () => {} },
 ];
 
-function renderMenu(props: Partial<Parameters<typeof LotionSuggestionMenu>[0]> = {}) {
+function renderMenu(props: Partial<Parameters<typeof MyLotionSuggestionMenu>[0]> = {}) {
   const el = document.createElement("div");
   document.body.appendChild(el);
   const root = createRoot(el);
   act(() => {
     root.render(
-      <LotionSuggestionMenu
+      <MyLotionSuggestionMenu
         items={ITEMS}
         loadingState="loaded"
         selectedIndex={undefined}
@@ -30,7 +30,7 @@ function renderMenu(props: Partial<Parameters<typeof LotionSuggestionMenu>[0]> =
   return el;
 }
 
-describe("LotionSuggestionMenu", () => {
+describe("MyLotionSuggestionMenu", () => {
   it("渲染分组标签、标题、图标与快捷键徽标", () => {
     const el = renderMenu();
     const text = el.textContent ?? "";
@@ -40,13 +40,13 @@ describe("LotionSuggestionMenu", () => {
     expect(text).toContain("提示框");
     expect(text).toContain("💡");
     expect(text).toContain("⌘⌥1");
-    expect(el.querySelectorAll(".lotion-suggestion-menu-label").length).toBe(2);
-    expect(el.querySelectorAll(".lotion-suggestion-menu-item").length).toBe(3);
+    expect(el.querySelectorAll(".mylotion-suggestion-menu-label").length).toBe(2);
+    expect(el.querySelectorAll(".mylotion-suggestion-menu-item").length).toBe(3);
   });
 
   it("selectedIndex 对应项带 is-selected 类", () => {
     const el = renderMenu({ selectedIndex: 1 });
-    const items = el.querySelectorAll<HTMLButtonElement>(".lotion-suggestion-menu-item");
+    const items = el.querySelectorAll<HTMLButtonElement>(".mylotion-suggestion-menu-item");
     expect(items[1].className).toContain("is-selected");
     expect(items[0].className).not.toContain("is-selected");
   });

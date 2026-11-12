@@ -40,7 +40,7 @@ export function SidebarFooter({ rail, onBatchMode }: SidebarFooterProps) {
     refreshUser();
   };
 
-  const displayName = user?.name || user?.email?.split("@")[0] || "Lotion 用户";
+  const displayName = user?.name || user?.email?.split("@")[0] || "MyLotion 用户";
   const btn = rail ? "h-9 w-9" : "h-7 w-7";
 
   return (

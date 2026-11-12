@@ -1,6 +1,6 @@
 // 已安装插件的包格式与文件存储（宿主侧）。
 //
-// 布局：data/plugins/installed/<id>/plugin.json（LOTION_PLUGINS_DIR 可覆盖根目录）。
+// 布局：data/plugins/installed/<id>/plugin.json（MYLOTION_PLUGINS_DIR 可覆盖根目录）。
 // 一个包 = 单个 JSON：元数据 + 可选 host/client 源码 + 启停/审批/配置值。
 // 不落 node_modules、不执行 npm 安装脚本；host 代码仍走 node:vm（不是安全边界）。
 //

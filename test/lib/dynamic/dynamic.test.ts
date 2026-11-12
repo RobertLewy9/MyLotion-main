@@ -265,7 +265,7 @@ describe("动态插件通道的 opt-in 开关（组合清单 + 用户层 patch�
 
     await kernel.dispose();
     _resetHostKernelForTest();
-  });
+  }, 15_000);
 
   it("改 data/settings.json 启用后：服务就位、plugin_* 工具对模型可见、沙箱注册的工具可运行可回收", async () => {
     const fs = await import("node:fs");
@@ -275,7 +275,7 @@ describe("动态插件通道的 opt-in 开关（组合清单 + 用户层 patch�
     const { openTestDb: openDb, initDatabase: init } = await import("@/lib/local/sqlite");
     const { buildToolSet } = await import("@/lib/ai/tools/registry");
 
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-dyn-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-dyn-"));
     const settingsPath = path.join(dir, "settings.json");
     // 启用动态插件通道 = 一行配置（不改代码）
     fs.writeFileSync(

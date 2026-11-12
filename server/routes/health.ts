@@ -4,4 +4,4 @@ import type { AppEnv } from "../http";
 
 export const healthRoutes = new Hono<AppEnv>();
 
-healthRoutes.get("/", (c) => c.json({ ok: true, service: "lotion" }));
+healthRoutes.get("/", (c) => c.json({ ok: true, service: "mylotion" }));

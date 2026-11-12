@@ -23,9 +23,9 @@ import { registerBuiltinTools } from "@/lib/ai/tools";
 import { sqliteDocStorePlugin } from "@/lib/local/doc-store-sqlite";
 import { settingsFilePlugin } from "@/lib/local/settings-file";
 import {
-  LOTION_SETTINGS_SERVICE,
-  requireLotionSettings,
-} from "@/lib/local/lotion-config";
+  MYLOTION_SETTINGS_SERVICE,
+  requireMyLotionSettings,
+} from "@/lib/local/mylotion-config";
 import { createPluginManager } from "@/lib/local/plugin-manager";
 import { createFileDynamicPersistence } from "@/lib/local/dynamic-store";
 import { findInstalledStore } from "@/lib/local/plugin-package";
@@ -119,25 +119,25 @@ export function hostComposition(options: HostCompositionOptions = {}): PluginEnt
     },
     {
       // 插件管理：列表/启停/配置/动态插件审批。依赖的是**已安装的配置句柄**
-      // （server/kernel.ts 在 installLotionSettings 之后 provideLotionSettings）。
+      // （server/kernel.ts 在 installMyLotionSettings 之后 provideMyLotionSettings）。
       id: "plugin-manager",
       plugin: {
         name: "plugin-manager",
-        inject: [LOTION_SETTINGS_SERVICE],
+        inject: [MYLOTION_SETTINGS_SERVICE],
         apply: (ctx: Context) => {
-          const lotion = requireLotionSettings(ctx);
+          const mylotion = requireMyLotionSettings(ctx);
           const manager = createPluginManager({
             ctx,
-            settings: lotion.plugins,
-            marketSettings: lotion.market,
+            settings: mylotion.plugins,
+            marketSettings: mylotion.market,
             getDynamic: () => findDynamic(ctx),
             // 已安装包/运行时由 server/kernel.ts 在装配后提供（这里延迟取）
             getPackages: () => findInstalledStore(ctx),
             getRuntime: () => findInstalledRuntime(ctx),
             getStaticController: () => findStaticPluginController(ctx),
             market: createDefaultPluginMarket({
-              registryUrl: () => lotion.market.get().registryUrl,
-              requireSignature: () => lotion.market.get().requireSignature,
+              registryUrl: () => mylotion.market.get().registryUrl,
+              requireSignature: () => mylotion.market.get().requireSignature,
             }),
           });
           providePluginAdmin(ctx, manager);

@@ -64,7 +64,7 @@ const LandingText = () => {
                 <div className="mt-8">
                     <Link to="/register">
                         <Button className="h-11 rounded-[10px] px-6 text-[15px] font-medium active:scale-[0.98]">
-                            Get Lotion Free!
+                            Get MyLotion Free!
                         </Button>
                     </Link>
                 </div>

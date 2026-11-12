@@ -10,7 +10,7 @@
 // 安全：
 //   * 远端只接受 HTTPS（localhost 例外），5s 超时 + 512KB 上限；
 //   * bundle 计算 sha256；registry 提供 sha256 时校验；
-//   * 配置 LOTION_MARKET_PUBLIC_KEY 后，带 signature 的 bundle 会做 Ed25519 验签；
+//   * 配置 MYLOTION_MARKET_PUBLIC_KEY 后，带 signature 的 bundle 会做 Ed25519 验签；
 //   * requireSignature=true 时拒绝未签名/验签失败的 bundle。
 //
 // ⚠️ 服务端专用。
@@ -275,9 +275,9 @@ export function createPluginMarket(options: CreatePluginMarketOptions = {}): Plu
       if (requireSignature() && !isLocal) throw new Error("该插件未签名，当前配置要求强制验签");
       return;
     }
-    const pem = process.env.LOTION_MARKET_PUBLIC_KEY?.replace(/\\n/g, "\n");
+    const pem = process.env.MYLOTION_MARKET_PUBLIC_KEY?.replace(/\\n/g, "\n");
     if (!pem) {
-      if (requireSignature()) throw new Error("未配置 LOTION_MARKET_PUBLIC_KEY，无法验签");
+      if (requireSignature()) throw new Error("未配置 MYLOTION_MARKET_PUBLIC_KEY，无法验签");
       return;
     }
     const ok = verifySignature(

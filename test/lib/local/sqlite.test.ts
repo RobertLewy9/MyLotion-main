@@ -50,7 +50,7 @@ describe("lib/local/sqlite", () => {
     const fk = db.pragma("foreign_keys", { simple: true });
     expect(fk).toBe(1);
 
-    const file = new Database(path.join(tmpdir(), `lotion-test-${Date.now()}.db`));
+    const file = new Database(path.join(tmpdir(), `mylotion-test-${Date.now()}.db`));
     try {
       initDatabase(file);
       const wal = file.pragma("journal_mode", { simple: true });

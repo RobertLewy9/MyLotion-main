@@ -15,11 +15,11 @@ import {
 
 let dir: string;
 let db: Database.Database;
-const ENV_KEYS = ["DEEPSEEK_API_KEY", "AI_MODEL", "PORT", "LOTION_SETTINGS_PATH"] as const;
+const ENV_KEYS = ["DEEPSEEK_API_KEY", "AI_MODEL", "PORT", "MYLOTION_SETTINGS_PATH"] as const;
 const saved: Record<string, string | undefined> = {};
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-kernel-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-kernel-"));
   db = openTestDb();
   initDatabase(db);
   db.prepare(

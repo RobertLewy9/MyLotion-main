@@ -72,20 +72,20 @@ describe("路由表", () => {
   it("/login 渲染登录页", async () => {
     mockAnonymous();
     await mountAt("/login");
-    expect(container.textContent).toContain("登录 Lotion");
+    expect(container.textContent).toContain("登录 MyLotion");
     expect(container.textContent).toContain("注册");
   });
 
   it("/register 渲染注册页", async () => {
     mockAnonymous();
     await mountAt("/register");
-    expect(container.textContent).toContain("注册 Lotion");
+    expect(container.textContent).toContain("注册 MyLotion");
   });
 
   it("/ 渲染着陆页（公开，无需会话）", async () => {
     mockAnonymous();
     await mountAt("/");
-    expect(container.textContent).toContain("Lotion");
+    expect(container.textContent).toContain("MyLotion");
     // 着陆页有登录/注册入口（文案为英文）
     expect(container.textContent).toMatch(/Login|Sign up/);
   });
@@ -94,7 +94,7 @@ describe("路由表", () => {
     mockAnonymous();
     const router = await mountAt("/documents");
     expect(router.state.location.pathname).toBe("/login");
-    expect(container.textContent).toContain("登录 Lotion");
+    expect(container.textContent).toContain("登录 MyLotion");
   });
 
   it("已登录访问 /documents 进入主界面（不重定向）", async () => {

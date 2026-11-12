@@ -6,7 +6,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type Database from "better-sqlite3";
 import { isoNow, newId } from "./sqlite";
 
-export const SESSION_COOKIE = "lotion_session";
+export const SESSION_COOKIE = "mylotion_session";
 export const SESSION_TTL_DAYS = 30; // 会话有效期（天）
 export const MIN_PASSWORD_LENGTH = 8;
 

@@ -12,6 +12,6 @@ describe("GET /api/health", () => {
   it("无需登录返回 ok", async () => {
     const res = await app.request("/api/health");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, service: "lotion" });
+    expect(await res.json()).toEqual({ ok: true, service: "mylotion" });
   });
 });

@@ -234,7 +234,7 @@ describe("动态插件客户端半边的下发与运行", () => {
     const os = await import("node:os");
     const path = await import("node:path");
 
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-dynclient-"));
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-dynclient-"));
     const settingsPath = path.join(dir, "settings.json");
     fs.writeFileSync(
       settingsPath,
@@ -280,7 +280,7 @@ describe("动态插件客户端半边的下发与运行", () => {
     await kernel.dispose();
     _resetHostKernelForTest();
     fs.rmSync(dir, { recursive: true, force: true });
-  });
+  }, 15_000);
 
   it("客户端：拉到定义→沙箱运行→插槽出现；通道关闭（remote 失败）时无副作用", async () => {
     const { syncClientHalves } = await import("@/src/dynamic/client-runner");

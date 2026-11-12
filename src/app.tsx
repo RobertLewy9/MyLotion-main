@@ -29,7 +29,7 @@ const App = ({ disabledUiPlugins = [] }: AppProps) => {
       defaultTheme="system"
       enableSystem
       disableTransitionOnChange
-      storageKey="Lotion-theme"
+      storageKey="MyLotion-theme"
     >
       <Toaster position="top-right" />
       <KernelProvider options={options}>

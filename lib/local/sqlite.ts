@@ -4,7 +4,7 @@
 // 迁移策略（D6 决策：每次启动运行 SQL 迁移脚本）：
 // - 所有 DDL 内嵌在 lib/local/migrations.ts（避免运行时读 .sql 文件的路径问题）
 // - 已应用迁移记录在 _migrations 表，按序执行、幂等、事务包裹
-// - 进程内单例连接，文件路径可经 LOTION_DB_PATH 覆盖（默认 <项目根>/data/lotion.db）
+// - 进程内单例连接，文件路径可经 MYLOTION_DB_PATH 覆盖（默认 <项目根>/data/mylotion.db）
 
 import Database from "better-sqlite3";
 import fs from "node:fs";
@@ -50,9 +50,9 @@ function runMigrations(db: Database.Database): void {
   apply();
 }
 
-/** 默认数据库文件路径（可经 LOTION_DB_PATH 环境变量覆盖） */
+/** 默认数据库文件路径（可经 MYLOTION_DB_PATH 环境变量覆盖） */
 export function resolveDbPath(): string {
-  return process.env.LOTION_DB_PATH ?? path.join(process.cwd(), "data", "lotion.db");
+  return process.env.MYLOTION_DB_PATH ?? path.join(process.cwd(), "data", "mylotion.db");
 }
 
 let _db: Database.Database | null = null;

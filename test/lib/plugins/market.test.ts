@@ -11,7 +11,7 @@ let dir: string;
 let publicDir: string;
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-market-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-market-"));
   publicDir = path.join(dir, "public");
   fs.mkdirSync(path.join(publicDir, "plugin-market"), { recursive: true });
 });
@@ -163,8 +163,8 @@ describe("createPluginMarket", () => {
     const signature = sign(null, Buffer.from(sha, "hex"), privateKey).toString("base64");
     const pem = publicKey.export({ type: "spki", format: "pem" }).toString();
 
-    const previous = process.env.LOTION_MARKET_PUBLIC_KEY;
-    process.env.LOTION_MARKET_PUBLIC_KEY = pem;
+    const previous = process.env.MYLOTION_MARKET_PUBLIC_KEY;
+    process.env.MYLOTION_MARKET_PUBLIC_KEY = pem;
     try {
       const signed = market({ requireSignature: () => true });
       await expect(signed.bundle(entry({ sha256: sha, signature }) as never)).resolves.toBeTruthy();
@@ -173,8 +173,8 @@ describe("createPluginMarket", () => {
         signed.bundle(entry({ sha256: sha, signature: "bad" }) as never),
       ).rejects.toThrow(/签名校验失败/);
     } finally {
-      if (previous === undefined) delete process.env.LOTION_MARKET_PUBLIC_KEY;
-      else process.env.LOTION_MARKET_PUBLIC_KEY = previous;
+      if (previous === undefined) delete process.env.MYLOTION_MARKET_PUBLIC_KEY;
+      else process.env.MYLOTION_MARKET_PUBLIC_KEY = previous;
     }
   });
 

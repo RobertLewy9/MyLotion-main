@@ -1,4 +1,4 @@
-// Cordis 适配层：Lotion 只从这里接触内核。
+// Cordis 适配层：MyLotion 只从这里接触内核。
 //
 // 为什么需要它（而不是到处直接 import cordis）：
 //   1. **收窄语义差异**：Cordis 有几处与我们此前自研内核不同（见下），适配层把差异集中在一处；
@@ -159,7 +159,7 @@ export function formatAudit(report: AuditReport): string {
 //
 // Cordis 的 `ctx.get(name)` / `ctx.provide(name, …)` **只对"已声明在 Context 上的键"**有类型
 // （`K extends keyof this`）——这正是它鼓励的用法（DSH 用 `declare module` 为每个服务登记键名）。
-// Lotion 的服务名由各接缝模块自己持有（`lib/seams/*` 的 `*_SERVICE` 常量），
+// MyLotion 的服务名由各接缝模块自己持有（`lib/seams/*` 的 `*_SERVICE` 常量），
 // 因此在这里做一次**显式**的边界转换：类型在接缝处保证，转换集中一处、可被审查。
 
 /** 按名读服务（非严格：未提供时 undefined） */

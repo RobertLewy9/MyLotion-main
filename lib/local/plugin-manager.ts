@@ -21,7 +21,7 @@ import type {
   PluginStatus,
 } from "@/lib/seams/plugins";
 import type { SettingsSection } from "@/lib/seams/settings";
-import type { MarketSettings, PluginsSettings } from "./lotion-config";
+import type { MarketSettings, PluginsSettings } from "./mylotion-config";
 import { PLUGIN_CATALOG, type PluginCatalogEntry } from "./plugin-catalog";
 import {
   compareVersions,

@@ -23,11 +23,11 @@ import "@blocknote/core/style.css";
 import "@blocknote/react/style.css";
 import { useTheme } from "next-themes";
 import { isBlockNoteJson, toEditorBlocks } from "@/lib/content";
-import { createLotionSchema } from "@/lib/blocknote-schema";
+import { createMyLotionSchema } from "@/lib/blocknote-schema";
 import { createEditorSyncState, reduceEditorSync, type EditorSyncEvent } from "./editor-sync";
 import { useDocStore } from "@/src/kernel/react";
 import OutlinePanel from "@/components/editor/outline-panel";
-import LotionSuggestionMenu from "@/components/editor/lotion-suggestion-menu";
+import MyLotionSuggestionMenu from "@/components/editor/mylotion-suggestion-menu";
 import "@/components/editor/blocknote.css";
 
 interface EditorProps {
@@ -59,7 +59,7 @@ const Editor = ({ onChange, initialContent, editable = true }: EditorProps) => {
   );
   const editor = useCreateBlockNote(
     {
-      schema: createLotionSchema(),
+      schema: createMyLotionSchema(),
       initialContent: initialBlocks,
       uploadFile: handleUpload,
       // 代码块语法高亮（shiki，@blocknote/code-block）
@@ -233,7 +233,7 @@ const Editor = ({ onChange, initialContent, editable = true }: EditorProps) => {
       onChange={onEditorChange}
       editable={editable}
       theme={resolvedTheme === "dark" ? "dark" : "light"}
-      className="lotion-editor"
+      className="mylotion-editor"
       // 对标 Notion：显式开启全部默认 UI（格式工具栏 / 链接工具栏 /
       // 侧边拖拽菜单 / 表格手柄 / 文件面板）；斜杠菜单由下方
       // SuggestionMenuController 接管（默认项 + Callout）
@@ -247,12 +247,12 @@ const Editor = ({ onChange, initialContent, editable = true }: EditorProps) => {
       <SuggestionMenuController
         triggerCharacter="/"
         getItems={getSlashMenuItems}
-        suggestionMenuComponent={LotionSuggestionMenu}
+        suggestionMenuComponent={MyLotionSuggestionMenu}
       />
       <SuggestionMenuController
         triggerCharacter="@"
         getItems={getMentionItems}
-        suggestionMenuComponent={LotionSuggestionMenu}
+        suggestionMenuComponent={MyLotionSuggestionMenu}
       />
       {/* 右侧页面大纲（对标 Notion Outline；编辑态显示） */}
       {editable && <OutlinePanel editor={editor} />}

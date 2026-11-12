@@ -1,7 +1,7 @@
 // blocknote-schema 单测（P1）：自定义 Callout 块在 schema 中注册，
 // 且服务端 toBlocks/toMarkdown 对含 callout 的 JSON 读写一致。
 import { describe, expect, it } from "vitest";
-import { lotionSchema } from "@/lib/blocknote-schema";
+import { mylotionSchema } from "@/lib/blocknote-schema";
 import { toBlocks, toMarkdown } from "@/lib/content-server";
 
 const CALLOUT_JSON = JSON.stringify([
@@ -20,11 +20,11 @@ const CALLOUT_JSON = JSON.stringify([
   },
 ]);
 
-describe("lotionSchema", () => {
+describe("mylotionSchema", () => {
   it("扩展了 callout 块（默认块保留）", () => {
-    expect(lotionSchema.blockSchema).toHaveProperty("callout");
-    expect(lotionSchema.blockSchema).toHaveProperty("paragraph");
-    expect(lotionSchema.blockSchema).toHaveProperty("heading");
+    expect(mylotionSchema.blockSchema).toHaveProperty("callout");
+    expect(mylotionSchema.blockSchema).toHaveProperty("paragraph");
+    expect(mylotionSchema.blockSchema).toHaveProperty("heading");
   });
 });
 
@@ -58,7 +58,7 @@ describe("mention 内联内容", () => {
   ]);
 
   it("schema 注册 mention；toBlocks 解析保留 id/title", async () => {
-    expect(lotionSchema.inlineContentSchema).toHaveProperty("mention");
+    expect(mylotionSchema.inlineContentSchema).toHaveProperty("mention");
     const blocks = await toBlocks(MENTION_JSON);
     const content = blocks[0].content as Array<{ type: string; props?: { id?: string; title?: string } }>;
     const mention = content.find((c) => c.type === "mention");

@@ -4,7 +4,7 @@ import { createRootContext } from "@/lib/kernel";
 import type { DynamicRecord, DynamicRunner } from "@/lib/seams/dynamic";
 import type { MarketEntry } from "@/lib/seams/plugins";
 import type { SettingsSection } from "@/lib/seams/settings";
-import type { MarketSettings } from "@/lib/local/lotion-config";
+import type { MarketSettings } from "@/lib/local/mylotion-config";
 import type { InstalledPluginManifest, PluginPackageStore } from "@/lib/local/plugin-package";
 import type { PluginMarket } from "@/lib/local/plugin-market";
 import type { InstalledPluginRuntime } from "@/lib/local/plugin-runtime";

@@ -55,7 +55,7 @@ const entry = {
   name: "字数统计",
   version: "1.0.0",
   description: "示例插件",
-  author: "lotion",
+  author: "mylotion",
   bundle: "/plugin-market/word-count.json",
 };
 

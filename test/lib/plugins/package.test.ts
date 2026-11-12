@@ -15,7 +15,7 @@ import {
 let dir: string;
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-package-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-package-"));
 });
 
 afterEach(() => {
@@ -105,16 +105,16 @@ describe("createFilePluginPackageStore", () => {
     expect(() => store.remove("../evil")).toThrow(/非法/);
   });
 
-  it("resolveInstalledDir 跟随 LOTION_PLUGINS_DIR", () => {
-    const previous = process.env.LOTION_PLUGINS_DIR;
-    process.env.LOTION_PLUGINS_DIR = "custom";
+  it("resolveInstalledDir 跟随 MYLOTION_PLUGINS_DIR", () => {
+    const previous = process.env.MYLOTION_PLUGINS_DIR;
+    process.env.MYLOTION_PLUGINS_DIR = "custom";
     try {
-      expect(resolveInstalledDir("/tmp/lotion")).toBe(
-        path.resolve("/tmp/lotion", "custom", "installed"),
+      expect(resolveInstalledDir("/tmp/mylotion")).toBe(
+        path.resolve("/tmp/mylotion", "custom", "installed"),
       );
     } finally {
-      if (previous === undefined) delete process.env.LOTION_PLUGINS_DIR;
-      else process.env.LOTION_PLUGINS_DIR = previous;
+      if (previous === undefined) delete process.env.MYLOTION_PLUGINS_DIR;
+      else process.env.MYLOTION_PLUGINS_DIR = previous;
     }
   });
 });

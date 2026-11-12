@@ -70,7 +70,7 @@ const SettingsModal = () => {
                     外观
                   </h2>
                   <p className="mt-0.5 text-[12px] leading-[17px] text-shell-label-tertiary">
-                    选择 Lotion 的显示主题。
+                    选择 MyLotion 的显示主题。
                   </p>
                 </div>
                 <div className="flex items-center justify-between rounded-[10px] border-[0.5px] border-shell-border px-3 py-2.5">

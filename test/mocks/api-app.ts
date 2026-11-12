@@ -1,7 +1,7 @@
 // 测试用 API app 装配：用一个**极简内核**装配内置路由插件，再交给 createApp。
 //
 // 为什么不直接 createApp()：路由现在是插件注册出来的（httpRoutes 注册表）。
-// 测试需要的是"与生产同一条装配路径，但不碰真实 data/lotion.db" ——
+// 测试需要的是"与生产同一条装配路径，但不碰真实 data/mylotion.db" ——
 // 本模块只挂 http-routes + 路由插件（路由自身的数据访问走被 mock 的 getDb），
 // 不挂 settings/docStore 提供方，因此不会创建/打开真实库文件。
 import { createRootContext, type Context } from "@/lib/kernel";

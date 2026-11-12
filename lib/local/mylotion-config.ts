@@ -1,4 +1,4 @@
-// Lotion 自身的配置命名空间声明（**组合层**默认值 + 环境变量映射）。
+// MyLotion 自身的配置命名空间声明（**组合层**默认值 + 环境变量映射）。
 //
 // 两层配置层级：组合默认（本文件）→ 用户层（data/settings.json）→ 环境变量。
 // schema 只有一份：既做运行期校验，也是类型来源。
@@ -8,7 +8,7 @@
 //
 // 迁入的既有配置（此前散落在各处直接读 process.env）：
 //   DEEPSEEK_API_KEY / AI_MODEL  → ai.apiKey / ai.model
-//   LOTION_DB_PATH / UPLOAD_DIR  → storage.dbPath / storage.uploadDir
+//   MYLOTION_DB_PATH / UPLOAD_DIR  → storage.dbPath / storage.uploadDir
 //   PORT                         → server.port
 //   LOG_LEVEL                    → logging.level
 import path from "node:path";
@@ -59,7 +59,7 @@ export const loggingSettingsSchema = z.object({
 export type LoggingSettings = z.infer<typeof loggingSettingsSchema>;
 
 /** 配置命名空间的读写句柄（消费方按需取用） */
-export interface LotionSettings {
+export interface MyLotionSettings {
   ai: SettingsSection<AiSettings>;
   /** 插件装配 patch（用户层可停用/改配置某个插件） */
   plugins: SettingsSection<PluginsSettings>;
@@ -70,31 +70,31 @@ export interface LotionSettings {
   logging: SettingsSection<LoggingSettings>;
 }
 
-/** `LotionSettings` 的服务 key（插件管理器等需要同一份句柄，不能重复 register） */
-export const LOTION_SETTINGS_SERVICE = "lotionSettings";
+/** `MyLotionSettings` 的服务 key（插件管理器等需要同一份句柄，不能重复 register） */
+export const MYLOTION_SETTINGS_SERVICE = "mylotionSettings";
 
-/** 把已安装的配置句柄挂到内核（server/kernel.ts 在 installLotionSettings 之后调用） */
-export function provideLotionSettings(ctx: Context, settings: LotionSettings): void {
-  provideService(ctx, LOTION_SETTINGS_SERVICE, settings);
+/** 把已安装的配置句柄挂到内核（server/kernel.ts 在 installMyLotionSettings 之后调用） */
+export function provideMyLotionSettings(ctx: Context, settings: MyLotionSettings): void {
+  provideService(ctx, MYLOTION_SETTINGS_SERVICE, settings);
 }
 
 /** 读配置句柄；未装配抛错（插件管理器属于必须依赖） */
-export function requireLotionSettings(ctx: Context): LotionSettings {
-  const settings = readService<LotionSettings>(ctx, LOTION_SETTINGS_SERVICE);
+export function requireMyLotionSettings(ctx: Context): MyLotionSettings {
+  const settings = readService<MyLotionSettings>(ctx, MYLOTION_SETTINGS_SERVICE);
   if (!settings) {
     throw new Error(
-      "lotionSettings 未装配：请确认 server/kernel.ts 在装配后调用了 provideLotionSettings()",
+      "mylotionSettings 未装配：请确认 server/kernel.ts 在装配后调用了 provideMyLotionSettings()",
     );
   }
   return settings;
 }
 
 /** 组合层默认值（唯一声明处；env 映射名与 README/docs 一致，有单测钉住） */
-export function lotionSettingsDefaults(cwd = process.cwd()) {
+export function mylotionSettingsDefaults(cwd = process.cwd()) {
   return {
     ai: { apiKey: "", model: "deepseek-flash" } satisfies AiSettings,
     storage: {
-      dbPath: path.join(cwd, "data", "lotion.db"),
+      dbPath: path.join(cwd, "data", "mylotion.db"),
       uploadDir: path.join(cwd, "data", "uploads"),
     } satisfies StorageSettings,
     server: { port: 3001 } satisfies ServerSettings,
@@ -105,25 +105,25 @@ export function lotionSettingsDefaults(cwd = process.cwd()) {
 }
 
 /**
- * 在给定内核上下文里安装全部 Lotion 配置命名空间（组合清单里的一行）。
+ * 在给定内核上下文里安装全部 MyLotion 配置命名空间（组合清单里的一行）。
  * 无 settings 提供方时也能工作：各 section 先用组合默认值。
  */
-export function installLotionSettings(ctx: Context, cwd?: string): LotionSettings {
-  const base = lotionSettingsDefaults(cwd);
+export function installMyLotionSettings(ctx: Context, cwd?: string): MyLotionSettings {
+  const base = mylotionSettingsDefaults(cwd);
 
   return {
     ai: installSettingsSection(ctx, "ai", aiSettingsSchema, base.ai, {
       env: { apiKey: "DEEPSEEK_API_KEY", model: "AI_MODEL" },
     }),
     storage: installSettingsSection(ctx, "storage", storageSettingsSchema, base.storage, {
-      env: { dbPath: "LOTION_DB_PATH", uploadDir: "UPLOAD_DIR" },
+      env: { dbPath: "MYLOTION_DB_PATH", uploadDir: "UPLOAD_DIR" },
     }),
     server: installSettingsSection(ctx, "server", serverSettingsSchema, base.server, {
       env: { port: "PORT" },
     }),
     plugins: installSettingsSection(ctx, "plugins", pluginsSettingsSchema, base.plugins),
     market: installSettingsSection(ctx, "market", marketSettingsSchema, base.market, {
-      env: { registryUrl: "LOTION_MARKET_URL" },
+      env: { registryUrl: "MYLOTION_MARKET_URL" },
     }),
     logging: installSettingsSection(ctx, "logging", loggingSettingsSchema, base.logging, {
       env: { level: "LOG_LEVEL" },

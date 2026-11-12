@@ -36,10 +36,10 @@ function writeUserLayer(content: unknown) {
 }
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-settings-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-settings-"));
   filePath = path.join(dir, "settings.json");
-  delete process.env.LOTION_TEST_AI_KEY;
-  delete process.env.LOTION_TEST_AI_MODEL;
+  delete process.env.MYLOTION_TEST_AI_KEY;
+  delete process.env.MYLOTION_TEST_AI_MODEL;
 });
 
 afterEach(() => {
@@ -54,7 +54,7 @@ describe("lib/seams/settings 脱敏", () => {
     expect(isSecretField("password")).toBe(true);
     expect(isSecretField("model")).toBe(false);
 
-    expect(maskSecret("sk-lotion-test-key-0000")).toBe("sk-l****0000");
+    expect(maskSecret("sk-mylotion-test-key-0000")).toBe("sk-m****0000");
     expect(maskSecret("short")).toBe("****");
     expect(maskSecret(undefined)).toBe("");
   });
@@ -78,27 +78,27 @@ describe("lib/local/settings-file 两层合并", () => {
 
   it("环境变量优先级最高，覆盖用户层与组合层", async () => {
     writeUserLayer({ ai: { model: "from-file" } });
-    process.env.LOTION_TEST_AI_MODEL = "from-env";
+    process.env.MYLOTION_TEST_AI_MODEL = "from-env";
     const provider = createSettingsFileProvider({ filePath });
     const section = provider.register("ai", aiSchema, {
       base: baseAi,
-      env: { model: "LOTION_TEST_AI_MODEL", apiKey: "LOTION_TEST_AI_KEY" },
+      env: { model: "MYLOTION_TEST_AI_MODEL", apiKey: "MYLOTION_TEST_AI_KEY" },
     });
 
     expect(section.get().model).toBe("from-env");
 
     // 空字符串视为未设置（不覆盖）
-    process.env.LOTION_TEST_AI_KEY = "";
+    process.env.MYLOTION_TEST_AI_KEY = "";
     expect(section.get().apiKey).toBe("");
   });
 
   it("用户层写坏时**不炸进程**：退回 base+env 并保留 env 生效", async () => {
     writeUserLayer({ ai: { temperature: "hot" } }); // 类型非法
-    process.env.LOTION_TEST_AI_MODEL = "from-env";
+    process.env.MYLOTION_TEST_AI_MODEL = "from-env";
     const provider = createSettingsFileProvider({ filePath });
     const section = provider.register("ai", aiSchema, {
       base: baseAi,
-      env: { model: "LOTION_TEST_AI_MODEL" },
+      env: { model: "MYLOTION_TEST_AI_MODEL" },
     });
 
     expect(section.get()).toEqual({ model: "from-env", apiKey: "", temperature: 1 });
@@ -118,17 +118,17 @@ describe("lib/local/settings-file 两层合并", () => {
     const seen: AiConfig[] = [];
     section.onChange((value) => seen.push(value));
 
-    await section.set({ apiKey: "sk-lotion-test-key-0000", temperature: 1.5 });
+    await section.set({ apiKey: "sk-mylotion-test-key-0000", temperature: 1.5 });
 
     expect(seen).toHaveLength(1);
-    expect(seen[0].apiKey).toBe("sk-lotion-test-key-0000");
+    expect(seen[0].apiKey).toBe("sk-mylotion-test-key-0000");
     // 落盘为明文（本地单机版语义），但 describe 输出必须脱敏
     const onDisk = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    expect(onDisk.ai.apiKey).toContain("sk-lotion-test");
+    expect(onDisk.ai.apiKey).toContain("sk-mylotion-test");
 
     const [info] = provider.describe();
     expect(info.namespace).toBe("ai");
-    expect(info.value.apiKey).toBe("sk-l****0000");
+    expect(info.value.apiKey).toBe("sk-m****0000");
     expect(info.value.model).toBe("deepseek-flash");
   });
 
@@ -140,14 +140,14 @@ describe("lib/local/settings-file 两层合并", () => {
   });
 
   it("resolveSettingsPath 默认落在 data/settings.json，可被环境变量覆盖", async () => {
-    const original = process.env.LOTION_SETTINGS_PATH;
-    delete process.env.LOTION_SETTINGS_PATH;
+    const original = process.env.MYLOTION_SETTINGS_PATH;
+    delete process.env.MYLOTION_SETTINGS_PATH;
     expect(resolveSettingsPath()).toBe(path.join(process.cwd(), "data", "settings.json"));
 
-    process.env.LOTION_SETTINGS_PATH = "/tmp/custom-settings.json";
+    process.env.MYLOTION_SETTINGS_PATH = "/tmp/custom-settings.json";
     expect(resolveSettingsPath()).toBe("/tmp/custom-settings.json");
-    if (original === undefined) delete process.env.LOTION_SETTINGS_PATH;
-    else process.env.LOTION_SETTINGS_PATH = original;
+    if (original === undefined) delete process.env.MYLOTION_SETTINGS_PATH;
+    else process.env.MYLOTION_SETTINGS_PATH = original;
   });
 });
 

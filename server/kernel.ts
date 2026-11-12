@@ -7,7 +7,7 @@
 //   1. 启动即审计：PENDING（缺依赖，插件不工作）与 FAILED 必须打印出来，
 //      否则 inject 门控失败就是静默的（DSH 的教训）。
 //   2. 配置从 settings 读，不再散落 process.env（env 仍是最高优先级来源）。
-//   3. 依赖可注入（db / settingsPath）：测试不碰真实 data/lotion.db。
+//   3. 依赖可注入（db / settingsPath）：测试不碰真实 data/mylotion.db。
 import type Database from "better-sqlite3";
 import path from "node:path";
 import {
@@ -27,10 +27,10 @@ import {
 } from "@/lib/kernel";
 import { logger } from "@/lib/logger";
 import {
-  installLotionSettings,
-  provideLotionSettings,
-  type LotionSettings,
-} from "@/lib/local/lotion-config";
+  installMyLotionSettings,
+  provideMyLotionSettings,
+  type MyLotionSettings,
+} from "@/lib/local/mylotion-config";
 import { createHttpRouteRegistry, provideHttpRoutes } from "@/lib/seams/http-routes";
 import { hostComposition, toPluginPatches } from "./composition";
 import { apiRoutePlugins, type ApiRouteRegistry } from "./routes";
@@ -60,7 +60,7 @@ export interface HostKernel {
   /** 组合清单装配报告（稳定 id → fiber） */
   load: LoadReport;
   /** 配置命名空间句柄（ai / storage / server / logging） */
-  settings: LotionSettings;
+  settings: MyLotionSettings;
   /** 启动审计报告 */
   audit: AuditReport;
   /** 装配 + 审计的可读文本（启动日志一次打印） */
@@ -122,9 +122,9 @@ export async function bootHostKernel(options: BootHostKernelOptions = {}): Promi
   const loadSettings = await loadPlugins(ctx, [...runtimeEntries, ...settingsEntries]);
 
   // 第 2 阶段：读用户层 patch（data/settings.json 的 `plugins` 命名空间），再装其余条目
-  const settings = installLotionSettings(ctx);
+  const settings = installMyLotionSettings(ctx);
   // 插件管理器等后续条目需要同一份配置句柄（不能重复 register）。
-  provideLotionSettings(ctx, settings);
+  provideMyLotionSettings(ctx, settings);
   // ⚠️ Cordis 的 inject 门控在下一个微任务才激活：不 settle 就读不到配置层，
   // 用户层 patch（data/settings.json 的 plugins）会被**静默忽略**。
   await settleAll(ctx);
@@ -195,7 +195,7 @@ export async function bootHostKernel(options: BootHostKernelOptions = {}): Promi
   return kernel;
 }
 
-/** 取宿主内核；未装配即抛错（**不隐式装配**：避免测试/脚本意外碰到真实 data/lotion.db） */
+/** 取宿主内核；未装配即抛错（**不隐式装配**：避免测试/脚本意外碰到真实 data/mylotion.db） */
 export function getHostKernel(): HostKernel {
   if (!current) {
     throw new Error("宿主内核未装配：请在入口调用 bootHostKernel()（server/index.ts 已调用）");

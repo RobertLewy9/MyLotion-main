@@ -22,7 +22,7 @@ const Heading = () => {
                 The notebook that <span className="text-primary">thinks</span> with you.
             </h1>
             <p className="mx-auto mt-5 max-w-[560px] text-[17px] leading-[1.5] text-muted-foreground md:text-[19px]">
-                Lotion is the connected workspace where an AI assistant writes,
+                MyLotion is the connected workspace where an AI assistant writes,
                 summarizes and organizes your notes — in your language.
             </p>
             {loading && (
@@ -34,7 +34,7 @@ const Heading = () => {
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                     <Link to="/register">
                         <Button className="h-11 rounded-[10px] px-6 text-[15px] font-medium active:scale-[0.98]">
-                            Get Lotion Free!
+                            Get MyLotion Free!
                         </Button>
                     </Link>
                     <Link to="/login">
@@ -48,7 +48,7 @@ const Heading = () => {
                 <div className="mt-8">
                     <Button asChild className="h-11 rounded-[10px] px-6 text-[15px] font-medium active:scale-[0.98]">
                         <Link to="/documents">
-                            Enter Lotion
+                            Enter MyLotion
                             <ArrowRight className="ml-1 h-4 w-4" strokeWidth={2} />
                         </Link>
                     </Button>

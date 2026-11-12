@@ -50,5 +50,5 @@ if (!kernel.settings.ai.get().apiKey) {
 
 serve({ fetch: app.fetch, port: PORT }, (info) => {
   const mode = hasBuild ? "（含静态资源 + SPA 回退）" : "（仅 API，客户端请用 vite dev）";
-  console.log(`[server] Lotion 运行于 http://localhost:${info.port} ${mode}`);
+  console.log(`[server] MyLotion 运行于 http://localhost:${info.port} ${mode}`);
 });

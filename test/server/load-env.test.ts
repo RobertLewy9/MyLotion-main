@@ -9,7 +9,7 @@ import { ENV_FILES, loadEnvFiles } from "@/server/load-env";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 /** 测试期间被写入 process.env 的键，逐条还原（避免污染同进程内的其他测试） */
-const TOUCHED = ["LOTION_ENV_TEST_A", "LOTION_ENV_TEST_B", "LOTION_ENV_TEST_C"];
+const TOUCHED = ["MYLOTION_ENV_TEST_A", "MYLOTION_ENV_TEST_B", "MYLOTION_ENV_TEST_C"];
 let saved: Record<string, string | undefined> = {};
 
 let dir = "";
@@ -25,7 +25,7 @@ beforeEach(() => {
     saved[key] = process.env[key];
     delete process.env[key];
   }
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-env-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-env-"));
 });
 
 afterEach(() => {
@@ -47,46 +47,46 @@ describe("server/load-env ENV_FILES", () => {
 
 describe("server/load-env loadEnvFiles", () => {
   it("把存在的 env 文件注入 process.env，并返回已加载文件列表", () => {
-    const file = write(".env.local", "LOTION_ENV_TEST_A=from-file\n");
+    const file = write(".env.local", "MYLOTION_ENV_TEST_A=from-file\n");
     const loaded = loadEnvFiles([file]);
 
     expect(loaded).toEqual([file]);
-    expect(process.env.LOTION_ENV_TEST_A).toBe("from-file");
+    expect(process.env.MYLOTION_ENV_TEST_A).toBe("from-file");
   });
 
   it("已存在的环境变量优先，文件不覆盖（与 node --env-file 语义一致）", () => {
-    process.env.LOTION_ENV_TEST_A = "from-real-env";
-    const file = write(".env", "LOTION_ENV_TEST_A=from-file\n");
+    process.env.MYLOTION_ENV_TEST_A = "from-real-env";
+    const file = write(".env", "MYLOTION_ENV_TEST_A=from-file\n");
 
     loadEnvFiles([file]);
 
-    expect(process.env.LOTION_ENV_TEST_A).toBe("from-real-env");
+    expect(process.env.MYLOTION_ENV_TEST_A).toBe("from-real-env");
   });
 
   it("缺失文件静默跳过，不抛错也不计入返回值", () => {
     const missing = path.join(dir, ".env.nope");
-    const present = write(".env", "LOTION_ENV_TEST_B=ok\n");
+    const present = write(".env", "MYLOTION_ENV_TEST_B=ok\n");
 
     expect(() => loadEnvFiles([missing])).not.toThrow();
     expect(loadEnvFiles([missing, present])).toEqual([present]);
-    expect(process.env.LOTION_ENV_TEST_B).toBe("ok");
+    expect(process.env.MYLOTION_ENV_TEST_B).toBe("ok");
   });
 
   it("先加载的文件优先：.env.local 的值不被后面的 .env 覆盖", () => {
-    const local = write(".env.local", "LOTION_ENV_TEST_C=local\n");
-    const plain = write(".env", "LOTION_ENV_TEST_C=plain\n");
+    const local = write(".env.local", "MYLOTION_ENV_TEST_C=local\n");
+    const plain = write(".env", "MYLOTION_ENV_TEST_C=plain\n");
 
     expect(loadEnvFiles([local, plain])).toEqual([local, plain]);
-    expect(process.env.LOTION_ENV_TEST_C).toBe("local");
+    expect(process.env.MYLOTION_ENV_TEST_C).toBe("local");
   });
 
   it("清掉引号与注释，值可用（真实 .env.local 的写法）", () => {
-    const file = write(".env.local", '# 注释\nLOTION_ENV_TEST_A="sk-quoted"\nLOTION_ENV_TEST_B=\n');
+    const file = write(".env.local", '# 注释\nMYLOTION_ENV_TEST_A="sk-quoted"\nMYLOTION_ENV_TEST_B=\n');
 
     loadEnvFiles([file]);
 
-    expect(process.env.LOTION_ENV_TEST_A).toBe("sk-quoted");
-    expect(process.env.LOTION_ENV_TEST_B).toBe("");
+    expect(process.env.MYLOTION_ENV_TEST_A).toBe("sk-quoted");
+    expect(process.env.MYLOTION_ENV_TEST_B).toBe("");
   });
 
   it("空文件列表是安全的空操作", () => {

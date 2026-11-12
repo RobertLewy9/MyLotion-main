@@ -1,4 +1,4 @@
-# Lotion（本地数据库版）— Notion Clone with AI Agent
+# MyLotion（本地数据库版）— Notion Clone with AI Agent
 
 基于 Vite + React 的类 Notion 笔记应用，Hono 提供 REST API，集成 DeepSeek AI 笔记助手。
 
@@ -33,7 +33,7 @@ pnpm dev          # 并行启动 vite(5173) + Hono(3001)；/api 由 vite 代理�
 pnpm dev:web      # 只启动前端
 pnpm dev:api      # 只启动 API（tsx watch）
 pnpm build        # vite 构建客户端到 dist/
-pnpm start        # 运行 Hono（托管 dist/ + API），首次请求自动建库 data/lotion.db
+pnpm start        # 运行 Hono（托管 dist/ + API），首次请求自动建库 data/mylotion.db
 pnpm typecheck    # tsc --noEmit
 pnpm lint         # ESLint
 pnpm test         # Vitest 单测（单次运行）
@@ -42,7 +42,7 @@ pnpm test:watch   # Vitest 监听模式
 
 ## 架构
 
-Lotion 是**插件化应用**：核心只提供内核与接缝，功能以插件挂载。内核是**真实
+MyLotion 是**插件化应用**：核心只提供内核与接缝，功能以插件挂载。内核是**真实
 `@deepseek-ai/cordis@4.0.2`**（不是自研），且**全仓库只有 `lib/kernel/cordis.ts` 一处 import 它**——
 要在 npm 依赖与 vendor 源码之间切换，只动那一个文件。完整设计（8 条接缝、写插件指南、
 动态通道的安全姿态）见 [docs/项目/插件化架构.md](docs/项目/插件化架构.md)，第三方插件格式见
@@ -116,7 +116,7 @@ lib/
 │   ├── db.ts                # 本地 SQL 实现（docStore 宿主实现的数据源，显式 userId 过滤）
 │   ├── doc-store-sqlite.ts  # docStore 的宿主提供方（包 lib/local/db.ts）
 │   ├── settings-file.ts     # settings 提供方（用户层 data/settings.json + 组合默认 + env 三层）
-│   ├── lotion-config.ts     # Lotion 配置命名空间（ai / plugins / market / storage / server / logging）
+│   ├── mylotion-config.ts   # MyLotion 配置命名空间（ai / plugins / market / storage / server / logging）
 │   ├── auth.ts              # scrypt 哈希 + 会话管理 + cookie 工具
 │   ├── request-user.ts      # 从请求 cookie 解析会话用户（中间件调用）
 │   ├── uploads.ts           # 上传目录解析（UPLOAD_DIR）
@@ -160,13 +160,13 @@ test/                       # Vitest 单测（lib/ / api/ / components/ / seams/
   打开看看 / 丢弃 / 确认保存 + 创建位置）；文档页不再有 `DraftBanner`（已删除）。
   刷新后的终态靠"文档事实对账"恢复：文档不在了 = 已丢弃，`isDraft=false` = 已保存
 - sidebar 宽度可拖拽（264-420px），可折叠为 56px rail
-- 运行时数据：`data/lotion.db`（可用 `LOTION_DB_PATH` 覆盖）、`data/uploads/`（可用 `UPLOAD_DIR` 覆盖）、
-  `data/plugins/`（已安装 + AI 动态定义，可用 `LOTION_PLUGINS_DIR` 覆盖）、
+- 运行时数据：`data/mylotion.db`（可用 `MYLOTION_DB_PATH` 覆盖）、`data/uploads/`（可用 `UPLOAD_DIR` 覆盖）、
+  `data/plugins/`（已安装 + AI 动态定义，可用 `MYLOTION_PLUGINS_DIR` 覆盖）、
   `data/plugin-market/`（发布包 / stats）与 `data/plugin-market.json`（本机市场 registry），均 gitignore
 - 插件管理：`pluginAdmin` 接缝 + `data/settings.json` 的 `plugins` patch；**所有登录账号权限一致**
   （设置页插件、侧边栏 `/market`、安装/评分/市场源等均可操作）；静态插件启停走
   `static-plugin-controller`（实时），UI 插件需刷新。市场支持
-  本地/远端 registry（`market.registryUrl` / `LOTION_MARKET_URL`）、搜索/分类/排序、上传/发布/导出、
+  本地/远端 registry（`market.registryUrl` / `MYLOTION_MARKET_URL`）、搜索/分类/排序、上传/发布/导出、
   版本更新、评分评论下载量、sha256 + 可选 Ed25519 验签；见 `docs/项目/插件开发.md`
 
 ## 设计系统（Apple / macOS 语言）

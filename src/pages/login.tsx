@@ -47,7 +47,7 @@ export default function LoginPage() {
             <PenLine className="h-6 w-6" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-[17px] font-semibold tracking-[-0.02em]">登录 Lotion</h1>
+            <h1 className="text-[17px] font-semibold tracking-[-0.02em]">登录 MyLotion</h1>
             <p className="mt-1 text-[12px] text-muted-foreground">让 AI 与你一起写笔记</p>
           </div>
         </div>

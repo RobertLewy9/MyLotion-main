@@ -5,7 +5,7 @@
       "name": "字数统计",
       "version": "1.0.0",
       "description": "给 AI 增加一个统计字数的工具，演示只贡献宿主 tools 的插件。",
-      "author": "lotion",
+      "author": "mylotion",
       "category": "效率",
       "tags": [
         "工具",
@@ -33,7 +33,7 @@
       "name": "今日一句",
       "version": "1.0.0",
       "description": "在侧边栏底部加一个 ✨ 按钮，点开随机一句；演示客户端半边 + UI 插槽。",
-      "author": "lotion",
+      "author": "mylotion",
       "category": "界面",
       "tags": [
         "UI",

@@ -1,6 +1,6 @@
 // 动态插件的文件持久化（宿主侧）。
 //
-// 目录：data/plugins/dynamic/<id>.json（LOTION_PLUGINS_DIR 可覆盖根目录）。
+// 目录：data/plugins/dynamic/<id>.json（MYLOTION_PLUGINS_DIR 可覆盖根目录）。
 // 只存定义 + 审批状态；**运行中的 fiber 不落盘**，重启后 runner 会把它归为 stopped。
 //
 // ⚠️ 服务端专用。写入用临时文件 + rename，避免半截 JSON。
@@ -20,7 +20,7 @@ const STATES = new Set<DynamicState>([
 
 /** 插件数据根目录（默认 data/plugins；测试/部署可注入） */
 export function resolvePluginsDir(cwd = process.cwd()): string {
-  const override = process.env.LOTION_PLUGINS_DIR;
+  const override = process.env.MYLOTION_PLUGINS_DIR;
   return override ? path.resolve(cwd, override) : path.join(cwd, "data", "plugins");
 }
 

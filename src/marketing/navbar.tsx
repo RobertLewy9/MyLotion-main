@@ -34,14 +34,14 @@ const Navbar = () => {
                             <Button variant="ghost" className="cursor-pointer">Login</Button>
                         </Link>
                         <Link to="/register">
-                            <Button className="cursor-pointer">Get Lotion free!</Button>
+                            <Button className="cursor-pointer">Get MyLotion free!</Button>
                         </Link>
                     </>
                 )}
                 {isAuthenticated && !loading && (
                     <Button asChild>
                         <Link to="/documents">
-                            Enter Lotion
+                            Enter MyLotion
                         </Link>
                     </Button>
                 )}

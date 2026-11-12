@@ -483,7 +483,7 @@ export function PluginMarket() {
               {confirmEntry?.signature ? "已签名（安装时验签）" : confirmEntry?.sha256 ? "有 sha256 校验和" : "未提供校验和"}
             </div>
             <p className="rounded-[6px] bg-amber-500/10 px-2.5 py-1.5 text-[11px] leading-4 text-amber-800 dark:text-amber-200">
-              宿主代码在 Lotion 进程内运行，客户端代码在浏览器执行；都不是安全沙箱。安装后默认停用。
+              宿主代码在 MyLotion 进程内运行，客户端代码在浏览器执行；都不是安全沙箱。安装后默认停用。
             </p>
           </div>
           <DialogFooter>

@@ -9,7 +9,7 @@ import { createFileDynamicPersistence, resolveDynamicDir, resolvePluginsDir } fr
 let dir: string;
 
 beforeEach(() => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), "lotion-dynamic-"));
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "mylotion-dynamic-"));
 });
 
 afterEach(() => {
@@ -79,17 +79,17 @@ describe("createFileDynamicPersistence", () => {
     expect(createFileDynamicPersistence(path.join(dir, "missing")).load()).toEqual([]);
   });
 
-  it("resolveDynamicDir 支持 LOTION_PLUGINS_DIR 覆盖", () => {
-    const previous = process.env.LOTION_PLUGINS_DIR;
-    process.env.LOTION_PLUGINS_DIR = "custom-plugins";
+  it("resolveDynamicDir 支持 MYLOTION_PLUGINS_DIR 覆盖", () => {
+    const previous = process.env.MYLOTION_PLUGINS_DIR;
+    process.env.MYLOTION_PLUGINS_DIR = "custom-plugins";
     try {
-      expect(resolvePluginsDir("/tmp/lotion")).toBe(path.resolve("/tmp/lotion", "custom-plugins"));
-      expect(resolveDynamicDir("/tmp/lotion")).toBe(
-        path.resolve("/tmp/lotion", "custom-plugins", "dynamic"),
+      expect(resolvePluginsDir("/tmp/mylotion")).toBe(path.resolve("/tmp/mylotion", "custom-plugins"));
+      expect(resolveDynamicDir("/tmp/mylotion")).toBe(
+        path.resolve("/tmp/mylotion", "custom-plugins", "dynamic"),
       );
     } finally {
-      if (previous === undefined) delete process.env.LOTION_PLUGINS_DIR;
-      else process.env.LOTION_PLUGINS_DIR = previous;
+      if (previous === undefined) delete process.env.MYLOTION_PLUGINS_DIR;
+      else process.env.MYLOTION_PLUGINS_DIR = previous;
     }
   });
 });

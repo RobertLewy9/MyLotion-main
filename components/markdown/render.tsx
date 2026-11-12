@@ -3,7 +3,7 @@
 // 一条 switch 遍历节点，使流式渲染能缓存冻结块为 React 元素。
 //
 // 不可信输出策略（与 DSH 一致）：链接/图片目标过协议白名单，图片额外要求绝对
-// HTTP(S)，raw HTML 以字面文本渲染（不进入 DOM）。Lotion 裁剪：无数学公式、
+// HTTP(S)，raw HTML 以字面文本渲染（不进入 DOM）。MyLotion 裁剪：无数学公式、
 // 无脚注、无文件提及、无代码高亮；额外支持 [@标题](文档id) 提及胶囊（onOpenDocument）。
 //
 // 合并可扩展节点联合落入文档化 default（渲染为空），而非 assertNever 结束：
@@ -69,7 +69,7 @@ export function collectReferenceTargets(
 
 /** 一轮渲染的状态：不可变选项与引用目标。 */
 export interface MarkdownRenderContext {
-  /** 流式臂：围栏代码不高亮（Lotion 无高亮，保持语义一致性）。 */
+  /** 流式臂：围栏代码不高亮（MyLotion 无高亮，保持语义一致性）。 */
   readonly streaming: boolean;
   /** 本轮可见的引用目标。 */
   readonly targets: ReferenceTargets;

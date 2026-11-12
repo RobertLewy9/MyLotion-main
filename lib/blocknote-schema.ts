@@ -10,7 +10,7 @@ import { codeBlockOptions } from "@blocknote/code-block";
 
 /**
  * Callout（提示框）块：emoji 图标 + 浅色圆角底 + 内联富文本。
- * 对标 Notion 的 Callout 块；DOM 结构带 .lotion-callout 类，样式见
+ * 对标 Notion 的 Callout 块；DOM 结构带 .mylotion-callout 类，样式见
  * components/editor/blocknote.css。点击图标弹出 emoji 选择器（可更换图标）。
  */
 const CALLOUT_EMOJIS = ["💡", "⚠️", "📌", "✅", "❌", "🔥", "🧠", "🎯", "📝", "🚀", "⭐", "🔔", "🎉", "🙏", "💬", "📚"];
@@ -20,15 +20,15 @@ function openCalloutIconPicker(
   block: { id: string; props: { icon?: string } },
   editor: { updateBlock: (id: string, update: { props: { icon: string } }) => unknown },
 ) {
-  document.querySelector(".lotion-callout-picker")?.remove();
+  document.querySelector(".mylotion-callout-picker")?.remove();
   const pop = document.createElement("div");
-  pop.className = "lotion-callout-picker";
+  pop.className = "mylotion-callout-picker";
   const rect = anchor.getBoundingClientRect();
   pop.style.top = `${rect.bottom + 6}px`;
   pop.style.left = `${Math.max(8, rect.left)}px`;
 
   const grid = document.createElement("div");
-  grid.className = "lotion-callout-picker-grid";
+  grid.className = "mylotion-callout-picker-grid";
   for (const emoji of CALLOUT_EMOJIS) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -69,9 +69,9 @@ const createCalloutBlock = createBlockSpec(
   {
     render: (block, editor) => {
       const wrapper = document.createElement("div");
-      wrapper.className = "lotion-callout";
+      wrapper.className = "mylotion-callout";
       const icon = document.createElement("span");
-      icon.className = "lotion-callout-icon";
+      icon.className = "mylotion-callout-icon";
       icon.setAttribute("contenteditable", "false");
       icon.title = "点击更换图标";
       icon.textContent = block.props.icon || "💡";
@@ -82,26 +82,26 @@ const createCalloutBlock = createBlockSpec(
         openCalloutIconPicker(icon, block, editor);
       });
       const content = document.createElement("div");
-      content.className = "lotion-callout-content";
+      content.className = "mylotion-callout-content";
       wrapper.appendChild(icon);
       wrapper.appendChild(content);
       return { dom: wrapper, contentDOM: content };
     },
-    // 粘贴/导入：识别 .lotion-callout 结构，取回 icon prop
+    // 粘贴/导入：识别 .mylotion-callout 结构，取回 icon prop
     parse: (el) => {
-      if (!el.classList.contains("lotion-callout")) return undefined;
-      const iconEl = el.querySelector(".lotion-callout-icon");
+      if (!el.classList.contains("mylotion-callout")) return undefined;
+      const iconEl = el.querySelector(".mylotion-callout-icon");
       return { icon: iconEl?.textContent?.trim() || "💡" };
     },
     // 复制到外部 / markdown 导出：与渲染结构一致（contentDOM 承载文本）
     toExternalHTML: (block) => {
       const wrapper = document.createElement("div");
-      wrapper.className = "lotion-callout";
+      wrapper.className = "mylotion-callout";
       const icon = document.createElement("span");
-      icon.className = "lotion-callout-icon";
+      icon.className = "mylotion-callout-icon";
       icon.textContent = block.props.icon || "💡";
       const content = document.createElement("div");
-      content.className = "lotion-callout-content";
+      content.className = "mylotion-callout-content";
       wrapper.appendChild(icon);
       wrapper.appendChild(content);
       return { dom: wrapper, contentDOM: content };
@@ -111,7 +111,7 @@ const createCalloutBlock = createBlockSpec(
 
 /**
  * Mention（@提及文档）内联内容：点击跳转到对应文档，对标 Notion 的 @ 引用。
- * DOM 渲染（非 React），客户端/服务端共享；结构带 .lotion-mention 类 + data-id。
+ * DOM 渲染（非 React），客户端/服务端共享；结构带 .mylotion-mention 类 + data-id。
  */
 const createMentionSpec = createInlineContentSpec(
   {
@@ -125,7 +125,7 @@ const createMentionSpec = createInlineContentSpec(
   {
     render: (inlineContent) => {
       const span = document.createElement("span");
-      span.className = "lotion-mention";
+      span.className = "mylotion-mention";
       span.setAttribute("contenteditable", "false");
       span.dataset.id = inlineContent.props.id;
       span.textContent = "@" + inlineContent.props.title;
@@ -140,7 +140,7 @@ const createMentionSpec = createInlineContentSpec(
       return { dom: span };
     },
     parse: (el) => {
-      if (!el.classList.contains("lotion-mention")) return undefined;
+      if (!el.classList.contains("mylotion-mention")) return undefined;
       return {
         id: el.getAttribute("data-id") || "",
         title: el.textContent?.replace(/^@/, "").trim() || "",
@@ -148,7 +148,7 @@ const createMentionSpec = createInlineContentSpec(
     },
     toExternalHTML: (inlineContent) => {
       const span = document.createElement("span");
-      span.className = "lotion-mention";
+      span.className = "mylotion-mention";
       span.dataset.id = inlineContent.props.id;
       span.textContent = "@" + inlineContent.props.title;
       return { dom: span };
@@ -157,7 +157,7 @@ const createMentionSpec = createInlineContentSpec(
 );
 
 /** 具体 schema 实例与类型：编辑器据此获得含 callout/mention/代码高亮的完整类型 */
-export const lotionSchema = BlockNoteSchema.create().extend({
+export const mylotionSchema = BlockNoteSchema.create().extend({
   blockSpecs: {
     callout: createCalloutBlock(),
     // 代码块支持语言集（配合编辑器 extensions 里的 syntaxHighlighter 渲染高亮）
@@ -167,9 +167,9 @@ export const lotionSchema = BlockNoteSchema.create().extend({
     mention: createMentionSpec,
   },
 });
-export type LotionSchema = typeof lotionSchema;
+export type MyLotionSchema = typeof mylotionSchema;
 
 /** 返回共享 schema 单例（客户端编辑器 / 服务端转换共用同一实例） */
-export function createLotionSchema(): LotionSchema {
-  return lotionSchema;
+export function createMyLotionSchema(): MyLotionSchema {
+  return mylotionSchema;
 }

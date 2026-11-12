@@ -104,17 +104,17 @@ function codeBlockPrePaddingTop(css: string): number | null {
 
 describe("编辑器代码块：深色代码面与语言选择器净空", () => {
   it("检测器自身有效：认得出该拦的、也不误伤已排除的写法", () => {
-    const bad = `.lotion-editor .bn-editor .bn-block-content[data-content-type="codeBlock"] { background: var(--shell-row-hover); }`;
+    const bad = `.mylotion-editor .bn-editor .bn-block-content[data-content-type="codeBlock"] { background: var(--shell-row-hover); }`;
     expect(codeBlockSurfaceClobbers(bad), "给代码块容器设背景应当被拦下").toHaveLength(1);
 
-    const good = `.lotion-editor .bn-editor .bn-block-content:not([data-content-type="codeBlock"]) { background: var(--shell-row-hover); }`;
+    const good = `.mylotion-editor .bn-editor .bn-block-content:not([data-content-type="codeBlock"]) { background: var(--shell-row-hover); }`;
     expect(codeBlockSurfaceClobbers(good), "已用 :not() 排除的写法不该被误判").toEqual([]);
 
     // 代码块**子元素**（> pre）的背景规则不算犯规：它是代码面自己的内边距/字体层
-    const child = `.lotion-editor .bn-editor .bn-block-content[data-content-type="codeBlock"] > pre { background: red; }`;
+    const child = `.mylotion-editor .bn-editor .bn-block-content[data-content-type="codeBlock"] > pre { background: red; }`;
     expect(codeBlockSurfaceClobbers(child)).toEqual([]);
 
-    const hoverCss = `.lotion-editor .bn-editor .bn-block-outer:hover > .bn-block > .bn-block-content { background: var(--shell-row-hover); }`;
+    const hoverCss = `.mylotion-editor .bn-editor .bn-block-outer:hover > .bn-block > .bn-block-content { background: var(--shell-row-hover); }`;
     const [hoverRule] = hoverHighlightRules(hoverCss);
     expect(hoverRule, "行高亮规则应当被识别出来").toBeDefined();
     expect(hoverRule.selector, "取到的应当是规则的选择器").toContain(".bn-block-content");

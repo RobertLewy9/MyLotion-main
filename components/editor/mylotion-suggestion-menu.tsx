@@ -6,26 +6,26 @@
 import { Fragment } from "react";
 import type { DefaultReactSuggestionItem, SuggestionMenuProps } from "@blocknote/react";
 
-export default function LotionSuggestionMenu({
+export default function MyLotionSuggestionMenu({
   items,
   loadingState,
   selectedIndex,
   onItemClick,
 }: SuggestionMenuProps<DefaultReactSuggestionItem>) {
   if (loadingState === "loading-initial" || loadingState === "loading") {
-    return <div className="lotion-suggestion-menu lotion-suggestion-menu--loading">加载中…</div>;
+    return <div className="mylotion-suggestion-menu mylotion-suggestion-menu--loading">加载中…</div>;
   }
 
   let lastGroup: string | undefined;
   return (
-    <div className="lotion-suggestion-menu" role="listbox">
+    <div className="mylotion-suggestion-menu" role="listbox">
       {items.map((item, index) => {
         const showLabel = item.group !== lastGroup;
         lastGroup = item.group;
         return (
           <Fragment key={`${item.title}-${index}`}>
             {showLabel && item.group && (
-              <div className="lotion-suggestion-menu-label">{item.group}</div>
+              <div className="mylotion-suggestion-menu-label">{item.group}</div>
             )}
             <button
               type="button"
@@ -33,18 +33,18 @@ export default function LotionSuggestionMenu({
               aria-selected={selectedIndex === index}
               className={
                 selectedIndex === index
-                  ? "lotion-suggestion-menu-item is-selected"
-                  : "lotion-suggestion-menu-item"
+                  ? "mylotion-suggestion-menu-item is-selected"
+                  : "mylotion-suggestion-menu-item"
               }
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onItemClick?.(item)}
             >
-              {item.icon && <span className="lotion-suggestion-menu-icon">{item.icon}</span>}
-              <span className="lotion-suggestion-menu-title">{item.title}</span>
+              {item.icon && <span className="mylotion-suggestion-menu-icon">{item.icon}</span>}
+              <span className="mylotion-suggestion-menu-title">{item.title}</span>
               {item.subtext && (
-                <span className="lotion-suggestion-menu-subtext">{item.subtext}</span>
+                <span className="mylotion-suggestion-menu-subtext">{item.subtext}</span>
               )}
-              {item.badge && <kbd className="lotion-suggestion-menu-badge">{item.badge}</kbd>}
+              {item.badge && <kbd className="mylotion-suggestion-menu-badge">{item.badge}</kbd>}
             </button>
           </Fragment>
         );

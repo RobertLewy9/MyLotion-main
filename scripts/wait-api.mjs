@@ -4,8 +4,8 @@
 // 内核（数百 ms）。浏览器先打开就会看到一串 ECONNREFUSED 代理错误；`/api/me` 失败后
 // 用户态还会停在 null，设置里的插件页直接消失。等待 API 就绪能把整类竞态消掉。
 const port = process.env.PORT ?? "3001";
-const url = process.env.LOTION_HEALTH_URL ?? `http://localhost:${port}/api/health`;
-const timeoutMs = Number(process.env.LOTION_WAIT_API_MS ?? 30_000);
+const url = process.env.MYLOTION_HEALTH_URL ?? `http://localhost:${port}/api/health`;
+const timeoutMs = Number(process.env.MYLOTION_WAIT_API_MS ?? 30_000);
 const deadline = Date.now() + timeoutMs;
 
 console.log(`[dev] 等待 API 就绪：${url}`);

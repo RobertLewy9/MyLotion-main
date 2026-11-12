@@ -3,7 +3,7 @@
   "name": "今日一句",
   "version": "1.0.0",
   "description": "在侧边栏底部加一个 ✨ 按钮，点开随机一句；演示客户端半边 + UI 插槽。",
-  "author": "lotion",
+  "author": "mylotion",
   "capabilities": [
     "ui"
   ],

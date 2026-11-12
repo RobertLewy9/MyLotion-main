@@ -1,5 +1,5 @@
 /**
- * Lotion 自研图标库（对齐 DSH ic_ds_* 图标集）：
+ * MyLotion 自研图标库（对齐 DSH ic_ds_* 图标集）：
  * 全部 SVG 组件 fill="currentColor"，接收 {size, className}。
  * 名称与 lucide-react 兼容（可直接替换导入），glyph 采用 DSH 同款填充轮廓风格。
  */

@@ -1,4 +1,4 @@
-// Lotion 内核入口 —— **真实 Cordis**（@deepseek-ai/cordis 4.x）的适配层。
+// MyLotion 内核入口 —— **真实 Cordis**（@deepseek-ai/cordis 4.x）的适配层。
 //
 // 迁移历史：本目录此前是自研的 Cordis 近似实现（context/fiber/events/audit/loader），
 // 现已改用 DeepSeek Harness vendor 的那份 Cordis（vendor/cordis → npm @deepseek-ai/cordis）。
